@@ -42,6 +42,7 @@ public class VGet {
     // if target file exists, override it. ignores video titles and ignores
     // (exists files)
     protected File targetForce = null;
+    protected String fileName = "";
 
     /**
      * extract video information constructor
@@ -301,7 +302,9 @@ public class VGet {
             }
         }
     }
-
+    public String getFileName(){
+        return fileName;
+    }
     // return true, video download have the same ".ext" for multiple videos
     public void targetFileExt(VideoFileInfo dinfo, String ext, AtomicBoolean conflict) {
         if (dinfo.targetFile == null) {
@@ -315,6 +318,7 @@ public class VGet {
 
             String sfilename = replaceBadChars(info.getTitle());
 
+
             sfilename = maxFileNameLength(sfilename);
 
             do {
@@ -323,7 +327,7 @@ public class VGet {
                 f = new File(targetDir, sfilename + add + ext);
                 idupcount += 1;
             } while (exists(f, conflict));
-
+            fileName = f.getName();
             dinfo.targetFile = f;
 
             // if we don't have resume file (targetForce==null) then we shall

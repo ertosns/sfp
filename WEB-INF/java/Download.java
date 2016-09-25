@@ -148,11 +148,16 @@ public class Download extends HttpServlet{
         VGet v = null;
         String name = "";
         Object[] objs = null;
-        String SONGS_PATH = "../webapps/youdown/WEB-INF/songs";
+        String SONGS_PATH = Download.class.getProtectionDomain().getCodeSource().getLocation().getPath()+"/../../../songs/";
+        byte[] bytes;
         try{
     	    File f = new File(SONGS_PATH);
+            if(f==null){
+                f.createNewFile();
+            }
     	    v = new VGet(url, f);
     	    v.download();
+            bytes = v.getFileName().getBytes("UTF-8");
             name = new String(bytes, "ISO-8859-1");
             objs = new Object[2];
             String path = SONGS_PATH+new String(bytes);
