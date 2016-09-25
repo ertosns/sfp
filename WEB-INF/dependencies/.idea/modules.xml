@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dependencies.iml" filepath="$PROJECT_DIR$/.idea/modules/dependencies.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dependencies_main.iml" filepath="$PROJECT_DIR$/.idea/modules/dependencies_main.iml" group="dependencies" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/dependencies_test.iml" filepath="$PROJECT_DIR$/.idea/modules/dependencies_test.iml" group="dependencies" />
+    </modules>
+  </component>
+</project>
