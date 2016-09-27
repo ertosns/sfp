@@ -1,91 +1,84 @@
 <!html>
 <head>
-	<link rel="stylesheet" type"text/css" href="./css/entrycss.css"/>
-	<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
-
+    <link rel="stylesheet" type"text/css" href="./css/entrycss.css"/>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
 </head>
 <body>
-	<header>
-		<img id = "logo" src="./img/logo"  style = "float: left; height: 50px; width: 60px;"></img>
-		<div style = "overflow: auto;">
-			<div class="header-tag" id = "devices">
-				<a href="./devices" class = "link"><p>devices<p></a>
-			</div>
-			<div class="header-tag" id = "login">
-				<a href="./login.html" class = "link"><p>log in</p></a>
-			</div>
-			<div class="header-tag" id = "signup">
-				<a href="./signup" class = "link"><p>sign up</p></a>
-			</div>
-			<div class="header-tag" id = "help">
-				<a href="./help" class = "link"><p>help</p></a>
-			</div>
-		</div>
-	</header>
-	<main>
-		<img id="song-img" style = "display: none; margin:auto; margin-top: 80px;padding-top:10px; width: 150px; height: 150px;"></img>
-		
-		<div id = "url-form" style = "margin:auto;width: 440px;margin-top: 30px;">
-			<input type = "text" value= "URL" id = "urlbar" width = "200px" size = 40>
-			<input id = "mobile-download-btn" type = "submit" value = "to Mobile">
-			<input type = "submit" value = "get Song" onClick="getSong()">
-		</div>
-
-		<div id="devices-choose-panel" style = "margin:auto;display: none;width:200px;">
-			<!-- if num of devices > 1 i should generate checkbox inputs with submit button-->
-			<p>choose set of your devices to download to</p>
-			<form style = "margin:auto;">
-				<input type = "submit" value = "download">
-			</form>
-		</div>
-
-		<div id = "no-mobiles" style = "overflow:auto;margin:auto;margin-top: 10px;width: 300px;display: none; background-color: #b8b4b4;">
-			<p id = "no-mobiles-p" style = "margin:auto;">Error: user had no mobiles!</p>
-		</div>
-	</main>
-	<footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;background-color:#5f5f5f;box-shadow: 0 -5px 5px #888888">
-		<div style = "float:left; width:60%;">
-			<p>that is how it works!</p>
-		</div>
-		<div style = "float:right;">
-			<p>contact info</p>
-		</div>
-	</footer>
-	<script type = "text/javascript">
-		// chech if user loged int or not using cookies(read cookies) 
-		// accordingly adjust dom (dom manipulation)
-		function adjustDom(){ //TODO check cookies authentications
-			var cookiesList = document.cookie;
-			if(!cookiesList){ // check if cookeis has valid name&pass else cracker can fake it
-				document.getElementById("devices").style.display = "none";
-				document.getElementById("url-form").style.marginTop="220px";
-				document.getElementById("mobile-download-btn").style.display= "none";
-			}
-		}
-		function getSong(){
-			
-			var v = document.getElementById("urlbar").value;
-			if(!(v.startsWith("https://www.youtube.com/watch?v=")||
-				 v.startsWith("http://www.youtube.com/watch?v=")||
-				 v.startsWith("www.youtube.com/watch?v=")||
-				 v.startsWith("youtube.com/watch?v="))		
-				) {
-				alert("bad URL")
-				return
-			}
-			//try catch doesn't work if 404 or any http error, then why it's used?
-			/*TODO front-endS
+    <header>
+        <img id = "logo" src="./img/logo"  style = "float: left; height: 50px; width: 60px;"></img>
+        <div style = "overflow: auto;">
+            <div class="header-tag" id = "devices">
+                <a href="./devices" class = "link"><p>devices<p></a>
+            </div>
+            <div class="header-tag" id = "login">
+                <a href="./login.html" class = "link"><p>log in</p></a>
+            </div>
+            <div class="header-tag" id = "signup">
+                <a href="./signup" class = "link"><p>sign up</p></a>
+            </div>
+            <div class="header-tag" id = "help">
+                <a href="./help" class = "link"><p>help</p></a>
+            </div>
+	    </div>
+    </header>
+    <main>
+        <img id="song-img" style = "display: none; margin:auto; margin-top: 80px;padding-top:10px; width: 150px; height: 150px;"></img>
+        <div id = "url-form" style = "margin:auto;width: 440px;margin-top: 30px;">
+            <input type = "text" value= "URL" id = "urlbar" width = "200px" size = 40>
+            <input id = "mobile-download-btn" type = "submit" value = "to Mobile">
+            <input type = "submit" value = "get Song" onClick="getSong()">
+        </div>
+        <div id="devices-choose-panel" style = "margin:auto;display: none;width:200px;">
+            <!-- if num of devices > 1 i should generate checkbox inputs with submit button-->
+            <p>choose set of your devices to download to</p>
+            <form style = "margin:auto;">
+                <input type = "submit" value = "download">
+            </form>
+	    </div>
+        <div id = "no-mobiles" style = "overflow:auto;margin:auto;margin-top: 10px;width: 300px;display: none; background-color: #b8b4b4;">
+            <p id = "no-mobiles-p" style = "margin:auto;">Error: user had no mobiles!</p>
+	    </div>
+    </main>
+    <footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;background-color:#5f5f5f;box-shadow: 0 -5px 5px #888888">
+        <div style = "float:left; width:60%;">
+            <p>that is how it works!</p>
+        </div>
+        <div style = "float:right;">
+            <p>contact info</p>
+        </div>
+    </footer>
+    <script type = "text/javascript">
+        // chech if user loged int or not using cookies(read cookies) 
+        // accordingly adjust dom (dom manipulation)
+        function adjustDom(){ //TODO check cookies authentications
+            var cookiesList = document.cookie;
+            if(!cookiesList){ // check if cookeis has valid name&pass else cracker can fake it
+                document.getElementById("devices").style.display = "none";
+                document.getElementById("url-form").style.marginTop="220px";
+                document.getElementById("mobile-download-btn").style.display= "none";
+	       }
+	    }
+        function getSong(){
+            var v = document.getElementById("urlbar").value;
+            if(!(v.startsWith("https://www.youtube.com/watch?v=")||
+                v.startsWith("http://www.youtube.com/watch?v=")||
+                v.startsWith("www.youtube.com/watch?v=")||
+                v.startsWith("youtube.com/watch?v="))) {
+		        alert("bad URL")
+		    return
+	    }
+        //try catch doesn't work if 404 or any http error, then why it's used?
+        /*TODO front-endS
 				solve cors problem and make http request to youtube
 				(if you solved cors you will be able to receive xhr response) read response
 				if(size of response if relativley small) {it's bad url id => halt here and inform user id funkin bad id} else {it works}
 			*/
-			window.location.href = "http://92.222.80.85:8080/sfp/getsong?login=false&download=true&pass=null&name=null&browser=true&url="+v.split("?v=")[1];
+        window.location.href = "http://92.222.80.85:8080/sfp/getsong?login=false&download=true&pass=null&name=null&browser=true&url="+v.split("?v=")[1];
 
 			/*TODO back-end
 				must limit number of download per day for specific ip (that prevent someone's script from block server via to many downloads may be many process for continues downloads) though it will still vulnerable if cracker can get use different ip for x of downloads)
 			*/
 		}
-		adjustDom()
-
-	</script>
+        adjustDom()
+    </script>
 </body>

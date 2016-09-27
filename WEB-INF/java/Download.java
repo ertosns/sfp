@@ -13,9 +13,8 @@ public class Download extends HttpServlet{
     String ENCODING = "UTF-8";
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-    throws IOException, ServletException{
-    	
-    	String name = decrypt(request.getParameter("name"));
+      throws IOException, ServletException{   	
+        String name = decrypt(request.getParameter("name"));
         String pass = decrypt(request.getParameter("pass"));
         boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));
         if(login){
@@ -29,8 +28,8 @@ public class Download extends HttpServlet{
                 response.addCookie(passCookie);
                 response.sendRedirect("http://92.222.80.85:8080/sfp");
             } else{
-               response.setStatus(401);
-               response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
+            response.setStatus(401);
+            response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
             }
             return;
         }
@@ -42,62 +41,61 @@ public class Download extends HttpServlet{
             int code = con.getResponseCode();
             if(code == 200) response.sendError(200);
             else response.setStatus(404);
-            return;
+           return;
         }
         if (browser) { // if target is browser force download
-            	try{
-            		forceBrowserFileDownload(url, response);
-            	}catch(Exception e){ 
-            		// should inform user
-            		e.printStackTrace();
-            	}
-        } else { // if target is mobile send via TCP
-                database = new Database();
-                int id = database.getAuthID(name, pass); // make that secure. 
-                if(id < 0){
-                	response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
-                	return;
+            try{
+                forceBrowserFileDownload(url, response);
+            }catch(Exception e){ 
+                // should inform user
+               e.printStackTrace();
+            }
+        } else{ // if target is mobile send via TCP
+            database = new Database();
+            int id = database.getAuthID(name, pass); // make that secure. 
+            if(id < 0){
+                response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
+                return;
+            }
+            try{
+                IPDesHash = database.getUserActiveIPs(id);
+                }catch(Exception e){
+                    // user isn't registered with his mobil ip. 
+                    // window or new page should open and inform user to install the app with app link and how it work.
+                    // response should be done here, and close connection
+                    return;
                 }
-        		try{
-            		IPDesHash = database.getUserActiveIPs(id);
-            	}catch(Exception e){
-            		// user isn't registered with his mobil ip. 
-            		// window or new page should open and inform user to install the app with app link and how it work.
-            		// response should be done here, and close connection
-            		return;
-            	}
-            	ArrayList<Integer> idleIPsIds = new ArrayList<Integer>();
-            	int ipSize = IPDesHash.size();
-                StringBuilder inactiveIPsDes = new StringBuilder("the following devices aren't accessible ");
-                ArrayList<String> activeIPs = new ArrayList<String>();
-                for(Map.Entry<String, String> e : IPDesHash.entrySet()){
-                    String mapIP = e.getKey();
-                    String mapDes = e.getValue();
-                    try {
-                        HttpURLConnection con =(HttpURLConnection) new URL(mapIP).openConnection();
-                        con.setRequestMethod("HEAD");
-                        con.connect();
-                        int responseCode = con.getResponseCode();
-                        con.disconnect();
-                        if(responseCode != 200){
-                            // message to user
-                            inactiveIPsDes.append(mapDes+"\n "); 
-                            // ips To tcpconnection
+            ArrayList<Integer> idleIPsIds = new ArrayList<Integer>();
+            int ipSize = IPDesHash.size();
+            StringBuilder inactiveIPsDes = new StringBuilder("the following devices aren't accessible ");
+            ArrayList<String> activeIPs = new ArrayList<String>();
+            for(Map.Entry<String, String> e : IPDesHash.entrySet()){
+                String mapIP = e.getKey();
+                String mapDes = e.getValue(); 
+                try {
+                    HttpURLConnection con =(HttpURLConnection) new URL(mapIP).openConnection();
+                    con.setRequestMethod("HEAD");
+                    con.connect();
+                    int responseCode = con.getResponseCode();
+                    con.disconnect();
+                    if(responseCode != 200){
+                        // message to user
+                        inactiveIPsDes.append(mapDes+"\n "); 
+                        // ips To tcpconnection
                         }else activeIPs.add(mapIP); 
-                    }catch(Exception exc) { exc.printStackTrace();  }
-                }
-                response.setContentType("text/html;charset=UTF-8");
-                String[] ip = activeIPs.toArray(new String[0]);
-            	if(ip.length == 0){
-            		inactiveIPsDes.append("FAILED to downlaod, no device is accessible please make sure you downloaded our AndroidApp, ON and accessible");
-            		response.getOutputStream().write(inactiveIPsDes.toString().getBytes(ENCODING));
-            		return;
-            	}else {
-            	    response.getOutputStream().write("song will be on your active devices soon".toString().getBytes(ENCODING));
-            	}
-            	TCPToMobile(ip, url);
+                }catch(Exception exc) { exc.printStackTrace();  }
+            }
+            response.setContentType("text/html;charset=UTF-8");
+            String[] ip = activeIPs.toArray(new String[0]);
+            if(ip.length == 0){
+                inactiveIPsDes.append("FAILED to downlaod, no device is accessible please make sure you downloaded our AndroidApp, ON and accessible");
+                response.getOutputStream().write(inactiveIPsDes.toString().getBytes(ENCODING));
+                return;
+            }else {
+                response.getOutputStream().write("song will be on your active devices soon".toString().getBytes(ENCODING));
+            }
+            TCPToMobile(ip, url);
         }
-
     }
     @Override 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
