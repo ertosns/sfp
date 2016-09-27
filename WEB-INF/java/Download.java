@@ -16,10 +16,15 @@ public class Download extends HttpServlet{
       throws IOException, ServletException{   	
         String name = decrypt(request.getParameter("name"));
         String pass = decrypt(request.getParameter("pass"));
+        boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
         boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));
-        if(login){
+        if(login||signup){
             database = new Database();
             int id = database.getAuthID(name, pass);
+            if(signup && id<0){
+                database.signUp(name, pass);
+                id = 1;
+            }   
             if(id >=0){
                 Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
                 Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
