@@ -12,7 +12,7 @@
 				<a href="./devices" class = "link"><p>devices<p></a>
 			</div>
 			<div class="header-tag" id = "login">
-				<a href="./login" class = "link"><p>log in</p></a>
+				<a href="./login.html" class = "link"><p>log in</p></a>
 			</div>
 			<div class="header-tag" id = "signup">
 				<a href="./signup" class = "link"><p>sign up</p></a>
@@ -74,12 +74,15 @@
 				return
 			}
 			//try catch doesn't work if 404 or any http error, then why it's used?
-			/*TODO front-end
+			/*TODO front-endS
 				solve cors problem and make http request to youtube
 				(if you solved cors you will be able to receive xhr response) read response
 				if(size of response if relativley small) {it's bad url id => halt here and inform user id funkin bad id} else {it works}
 			*/
+
 			window.location.href = "http://92.222.80.85:8080/sfp/getsong?download=true&pass=null&name=null&browser=true&url="+v.split("?v=")[1];
+
+
 			/*TODO back-end
 				must limit number of download per day for specific ip (that prevent someone's script from block server via to many downloads may be many process for continues downloads) though it will still vulnerable if cracker can get use different ip for x of downloads)
 			*/

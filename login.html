@@ -25,17 +25,16 @@
 				</label>
 			</fieldset>
 			<fieldset class = "action">
-				<button class = "btn" type = "button" onClick="login()">login</button>
-				<label>
+				<button class = "btn" type = "button" id="loginbtn">login</button>
+			    <!--<label>
 					<input id = "remember" type="checkbox" > stay signed in
-				</label>
+				</label>-->
 			
 			</fieldset>
 		</form>
 		<div id = "errorbox">
 			<p id = "loginError">error message</p>
 		</div>
-
 	</main>
 	<footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;box-shadow: 0 -5px 5px #888888">
 		<div style = "float:left; width:60%;">
@@ -46,21 +45,24 @@
 		</div>
 	</footer>
 	<script type = "text/javascript">
+	    document.getElementById("loginbtn").addEventListener('click', login, false);
 		function login(){
 			var name = document.getElementById("username").value;
 			var pass = document.getElementById("password").value;
-			var remember = document.getElementById("remember").checked;
-			var error = // use those params to make http connection with server and read response error|ok
-			var errorMessage 
-			if(error){
+			//var remember = document.getElementById("remember").checked;
+			var request = new XMLHttpRequest();
+			request.open("GET", "http://192.168.1.22:8080/sfp/getsong?name="+name+"&pass="+pass+
+				"login=true&browser=true&download=false&url=nullurl");
+			request.send()
+			var statusCode = request.status;
+			if(statusCode == 401){
 				document.getElementById("errorbox").style.display = "block";
 				var loginpar = document.getElementById("loginError");
-				loginpar.appendChild(errorMessage);
+				//TODO optimize to be more specific should check username or password or both.
+				loginpar.appendChild("check you username or password");
 			}else{
-				// if he wan't to stay signed in don't use cookies and send his parameters to index.html in magical way!
-				// else apply cookies and redirect client to index.html, and index.html have to extract login data.
+				document.getElementById("errorbox").style.display = "none";
 			}
 		}
-
 	</script>
 </body>
