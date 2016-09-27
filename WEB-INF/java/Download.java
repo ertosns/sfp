@@ -6,11 +6,11 @@ import java.net.*;
 import com.github.axet.vget.VGet;
 
 public class Download extends HttpServlet{
-	boolean browser = true;
-	int PORT = 1234;
-	HashMap<String, String> IPDesHash = null;
-	Database database = null;
-	String ENCODING = "UTF-8";
+    boolean browser = true;
+    int PORT = 1234;
+    HashMap<String, String> IPDesHash = null;
+    Database database = null;
+    String ENCODING = "UTF-8";
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
     throws IOException, ServletException{
@@ -103,6 +103,7 @@ public class Download extends HttpServlet{
             response.getOutputStream().write("authentication failed, wrong username or password".getBytes(ENCODING));
             return;
         }
+
         int ipsnum = database.getIPsNum(id);
         if(ipsnum >= 5)
         	response.setStatus(200);
@@ -152,8 +153,8 @@ public class Download extends HttpServlet{
         byte[] bytes;
         try{
     	    File f = new File(SONGS_PATH);
-            if(f==null){
-                f.createNewFile();
+            if(!f.exists()){
+                f.mkdirs();
             }
     	    v = new VGet(url, f);
     	    v.download();
