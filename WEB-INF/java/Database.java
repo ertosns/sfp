@@ -44,11 +44,22 @@ public class Database{
 			ps.setString(4, des);
 			ps.execute();
 		}catch(Exception e) { e.printStackTrace();  }}
+	// sign up from website.
+	public void signUp(String name, Strig pass){ 
+        try{//TODO limit num of signup per day.
+			stm.execute("insert into userinfo (NAME, PASS) values ("+name+", "+pass+");");
+		}catch(Exception e) { e.printStackTrace();  }
+	}
+	// sign up from android client.
 	public void signUP(String name, String pass, String ip, String des){
+		int id = getAuthID(name, pass);//TODO can i return id from insert statement?
+		if(id >= 0){//user is registered from browser client
+            insertIP(id, ip, des);
+            return;
+		}
 		try{//TODO limit num of signup per day.
 			stm.execute("insert into userinfo (NAME, PASS, IPNUMS) values ("+name+", "+pass+", "+1+");");
 		}catch(Exception e) { e.printStackTrace();  }
-		int id = getAuthID(name, pass);//TODO can i return id from insert statement?
 		insertIP(id, ip, des);
 	}
 	public int getAuthID(String name, String pass){
