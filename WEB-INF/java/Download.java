@@ -27,7 +27,7 @@ public class Download extends HttpServlet{
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
                 response.addCookie(nameCookie);
                 response.addCookie(passCookie);
-                response.sendRedirect("http://192.168.1.22:8080/sfp");
+                response.sendRedirect("http://92.222.80.85:8080/sfp");
             } else{
                response.setStatus(401);
                response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
