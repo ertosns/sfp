@@ -1,0 +1,20 @@
+apply plugin: 'java'
+
+sourceSets{
+	main{
+		//output.classesDir   = '.'
+		output.classesDir   = './classes'
+		java{
+
+			srcDir 'java'
+			// how make gradle compile to ./classes instead of compiling in the same directory
+		}
+	}
+}
+dependencies {
+	FileTree t = fileTree('./lib').include('*')
+	def resources = []
+	//resources.add('../../../../lib/servlet-api.jar')
+	t.visit {elm-> resources.add(elm.path)}
+	compile fileTree(dir:'./lib', include:resources
+}
