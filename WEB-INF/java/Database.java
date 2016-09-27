@@ -2,18 +2,18 @@ import java.sql.*;
 import java.util.*;
 
 public class Database{
-    private String URL = "jdbc:mysql://192.168.1.22";
+    private String URL = "jdbc:mysql://localhost/";
     private final String DRIVER = "com.mysql.jdbc.Driver";
-    private final String NAME = "mohab";
+    private final String NAME = "root";
     private final String PASS = "Princ5195";
     Connection con = null;
-	Statement stm = null;
-	public Database(){
-		try{
-			Class.forName(DRIVER);
-			con = DriverManager.getConnection(URL, NAME, PASS);
-			stm = con.createStatement();
-            stm.execute("create databse if not exists userinfo;");
+    Statement stm = null;
+    public Database(){
+       try{
+	    Class.forName(DRIVER);
+	    con = DriverManager.getConnection(URL, NAME, PASS);
+	    stm = con.createStatement();
+            stm.execute("create database if not exists userinfo;");
             URL += "/userinfo";
             con = DriverManager.getConnection(URL, NAME, PASS);
             stm = con.createStatement();

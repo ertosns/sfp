@@ -33,7 +33,7 @@
 			</fieldset>
 		</form>
 		<div id = "errorbox">
-			<p id = "loginError">error message</p>
+			<p id = "loginError"></p>
 		</div>
 	</main>
 	<footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;box-shadow: 0 -5px 5px #888888">
@@ -46,23 +46,28 @@
 	</footer>
 	<script type = "text/javascript">
 	    document.getElementById("loginbtn").addEventListener('click', login, false);
-		function login(){
+	    function login(){
 			var name = document.getElementById("username").value;
 			var pass = document.getElementById("password").value;
 			//var remember = document.getElementById("remember").checked;
 			var request = new XMLHttpRequest();
-			request.open("GET", "http://192.168.1.22:8080/sfp/getsong?name="+name+"&pass="+pass+
-				"login=true&browser=true&download=false&url=nullurl");
-			request.send()
-			var statusCode = request.status;
-			if(statusCode == 401){
-				document.getElementById("errorbox").style.display = "block";
-				var loginpar = document.getElementById("loginError");
-				//TODO optimize to be more specific should check username or password or both.
-				loginpar.appendChild("check you username or password");
-			}else{
-				document.getElementById("errorbox").style.display = "none";
-			}
-		}
+                        request.onreadystatechange = function() {
+                          if(this.readyState == 4 && this.status  == 401){
+                            document.getElementById("errorbox").style.display = "block";
+                            var loginpar = document.getElementById("loginError");
+                            //TODO optimize to be more specific should check username or password or both.
+	  		    if(!loginpar.childNodes[0]){
+			       loginpar.appendChild(document.createTextNode("check your username or password or both!"));
+			    } else {	
+                               loginpar.replaceChild(document.createTextNode("check your username or password or both!"), loginpar.childNodes[0]);
+			    }
+  
+                          }
+                        } 
+			request.open("GET", "http://92.222.80.85:8080/sfp/getsong?name="+name+"&pass="+pass+
+				"&login=true&browser=true&download=false&url=nullurl");
+                        request.send()
+			
+            }
 	</script>
 </body>
