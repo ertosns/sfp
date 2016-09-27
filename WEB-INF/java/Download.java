@@ -14,26 +14,44 @@ public class Download extends HttpServlet{
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
     throws IOException, ServletException{
-    	boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
+    	
     	String name = decrypt(request.getParameter("name"));
         String pass = decrypt(request.getParameter("pass"));
+        boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));
+        if(login){
+            database = new Database();
+            int id = database.getAuthID(name, pass);
+            if(id >=0){
+                Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
+                Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
+                //TODO use basic authentication to enbale user the option to use cookeis or not.
+                response.addCookie(nameCookie);
+                response.addCookie(passCookie);
+                response.sendRedirect("http://192.168.1.22:8080/sfp");
+            } else{
+               response.setStatus(401);
+               response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
+            }
+            return;
+        }
+        boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
         boolean browser = Boolean.parseBoolean(decrypt(request.getParameter("browser")));
         URL url = new URL("https://www.youtube.com/watch?v="+decrypt(request.getParameter("url")));
-        if(!download){
+        if(!download){ // check if the url is available.
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             int code = con.getResponseCode();
             if(code == 200) response.sendError(200);
             else response.setStatus(404);
             return;
         }
-        if (browser) {
+        if (browser) { // if target is browser force download
             	try{
             		forceBrowserFileDownload(url, response);
             	}catch(Exception e){ 
             		// should inform user
             		e.printStackTrace();
             	}
-        }else {
+        } else { // if target is mobile send via TCP
                 database = new Database();
                 int id = database.getAuthID(name, pass); // make that secure. 
                 if(id < 0){
@@ -79,6 +97,7 @@ public class Download extends HttpServlet{
             	}
             	TCPToMobile(ip, url);
         }
+
     }
     @Override 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -111,6 +130,10 @@ public class Download extends HttpServlet{
             response.setStatus(200);
             
         }
+    }
+    public String encrypt(String message){
+        //TODO implement encrypting algorithm
+        return message;
     }
     public void forceBrowserFileDownload(URL url, HttpServletResponse response){
       	try{
