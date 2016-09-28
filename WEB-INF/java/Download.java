@@ -27,14 +27,16 @@ public class Download extends HttpServlet{
             }   
             if(id >=0){
                 Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
+                nameCookie.setMaxAge(60*60*24*365);
                 Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
+                passCookie.setMaxAge(60*60*24*365);
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
                 response.addCookie(nameCookie);
                 response.addCookie(passCookie);
                 response.sendRedirect("http://92.222.80.85:8080/sfp");
             } else{
-            response.setStatus(401);
-            response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
+                response.setStatus(401);
+                response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
             }
             return;
         }
@@ -87,7 +89,7 @@ public class Download extends HttpServlet{
                         // message to user
                         inactiveIPsDes.append(mapDes+"\n "); 
                         // ips To tcpconnection
-                        }else activeIPs.add(mapIP); 
+                    }else activeIPs.add(mapIP); 
                 }catch(Exception exc) { exc.printStackTrace();  }
             }
             response.setContentType("text/html;charset=UTF-8");
