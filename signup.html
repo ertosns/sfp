@@ -11,7 +11,7 @@
                 <a href="./help" class = "link"><p>help</p></a>
             </div>
             <div class="header-tag" id = "login">
-                <a href="http://92.222.80.85/sfp/login.html" class = "link"><p>login</p></a>
+                <a href="http://92.222.80.85:8080/sfp/login.html" class = "link"><p>login</p></a>
             </div>
         </div>
     </header>
@@ -53,7 +53,7 @@
             checkValidity(pass)
             //var remember = document.getElementById("remember").checked
             var request = new XMLHttpRequest()
-            equest.onreadystatechange = function() {
+            request.onreadystatechange = function() {
                 if(this.readyState == 4 && this.status  == 401){
                     document.getElementById("errorbox").style.display = "block"
                     var loginpar = document.getElementById("loginError")

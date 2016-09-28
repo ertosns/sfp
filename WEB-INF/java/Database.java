@@ -13,8 +13,8 @@ public class Database{
 	    Class.forName(DRIVER);
 	    con = DriverManager.getConnection(URL, NAME, PASS);
 	    stm = con.createStatement();
-            stm.execute("create database if not exists userinfo;");
-            URL += "/userinfo";
+            stm.execute("create database if not exists sfp;");
+            URL += "sfp";
             con = DriverManager.getConnection(URL, NAME, PASS);
             stm = con.createStatement();
             DatabaseMetaData meta = con.getMetaData();
@@ -45,7 +45,7 @@ public class Database{
 			ps.execute();
 		}catch(Exception e) { e.printStackTrace();  }}
 	// sign up from website.
-	public void signUp(String name, Strig pass){ 
+	public void signUp(String name, String pass){ 
         try{//TODO limit num of signup per day.
 			stm.execute("insert into userinfo (NAME, PASS) values ("+name+", "+pass+");");
 		}catch(Exception e) { e.printStackTrace();  }
