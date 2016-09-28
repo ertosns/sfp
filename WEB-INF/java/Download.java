@@ -21,20 +21,20 @@ public class Download extends HttpServlet{
         if(login||signup){
             database = new Database();
             int id = database.getAuthID(name, pass);
-            if(signup && id<0){
-                database.signUp(name, pass);
-                id = 1;
-            }   
-            if(id >=0){
-                Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
-                nameCookie.setMaxAge(60*60*24*365);
-                Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
-                passCookie.setMaxAge(60*60*24*365);
+            Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
+            nameCookie.setMaxAge(60*60*24*365);
+            Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
+            passCookie.setMaxAge(60*60*24*365);
+            if((signup && id<0) || (login && id >= 0)){
+                if(signup){
+                    database.signUp(name, pass);                
+                }
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
                 response.addCookie(nameCookie);
                 response.addCookie(passCookie);
-                response.sendRedirect("http://92.222.80.85:8080/sfp");
-            } else{
+                response.sendRedirect("http://92.222.80.85:8080/sfp/index.html");
+            }   
+            else{
                 response.setStatus(401);
                 response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
             }

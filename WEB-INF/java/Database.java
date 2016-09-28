@@ -9,7 +9,7 @@ public class Database{
     Connection con = null;
     Statement stm = null;
     public Database(){
-       try{
+        try{
 	    Class.forName(DRIVER);
 	    con = DriverManager.getConnection(URL, NAME, PASS);
 	    stm = con.createStatement();
@@ -33,23 +33,27 @@ public class Database{
             	stm.execute(userInfoTable);
             	stm.execute(userIPsTable);
             }
-		}catch(Exception e) {e.printStackTrace();  }}
-	public void insertIP(int id, String ip, String des){
-		PreparedStatement ps = null;
-		try{
-			ps = con.prepareStatement("insert into userips (ID, IP, ACTIVE, DES) values(?, ?, ?, ?)");
-			ps.setInt(1, id);
-			ps.setString(2, ip);
-			ps.setBoolean(3, true);
-			ps.setString(4, des);
-			ps.execute();
-		}catch(Exception e) { e.printStackTrace();  }}
+	}catch(Exception e) {
+            e.printStackTrace();  
+        }
+    }
+    public void insertIP(int id, String ip, String des){
+        PreparedStatement ps = null;
+	try{
+	    ps = con.prepareStatement("insert into userips (ID, IP, ACTIVE, DES) values(?, ?, ?, ?)");
+	    ps.setInt(1, id);
+	    ps.setString(2, ip);
+            ps.setBoolean(3, true);
+	    ps.setString(4, des);
+	    ps.execute();
+	}catch(Exception e) { e.printStackTrace();  }
+    }
 	// sign up from website.
-	public void signUp(String name, String pass){ 
+    public void signUp(String name, String pass){ 
         try{//TODO limit num of signup per day.
-			stm.execute("insert into userinfo (NAME, PASS) values ("+name+", "+pass+");");
-		}catch(Exception e) { e.printStackTrace();  }
-	}
+	    stm.execute("insert into userinfo (NAME, PASS) values ("+name+", "+pass+");");
+	}catch(Exception e) { e.printStackTrace();  }
+    }
 	// sign up from android client.
 	public void signUP(String name, String pass, String ip, String des){
 		int id = getAuthID(name, pass);//TODO can i return id from insert statement?
