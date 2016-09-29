@@ -35,7 +35,7 @@ public class Database{
             }
         }catch(Exception e) { e.printStackTrace();  }
     }
-    public void insertIP(int id, String ip, String des){
+    public int insertIP(int id, String ip, String des){
         PreparedStatement ps = null;
         try{
             ps = con.prepareStatement("insert into userips (ID, IP, ACTIVE, DES) values(?, ?, ?, ?)");
@@ -44,41 +44,59 @@ public class Database{
             ps.setBoolean(3, true);
             ps.setString(4, des);
             ps.execute();
-        }catch(Exception e) { e.printStackTrace();  }
+        }catch(Exception e) {
+            e.printStackTrace();  
+            return -1;
+        }
+        return 0;
     }
 	// sign up from website.
-    public void signUp(String name, String pass){ 
+    public int signUp(String name, String pass){ 
         try{//TODO limit num of signup per day.
-            stm.execute("insert into userinfo (NAME, PASS) values ("+name+", "+pass+");");
-        }catch(Exception e) { e.printStackTrace();  }
+            stm.execute("insert into userinfo (NAME, PASS) values ('"+name+"', '"+pass+"');");
+        }catch(Exception e) {
+            e.printStackTrace();  
+            return -1;
+        }
+        return 0;
     }
     // sign up from android client.
-    public void signUP(String name, String pass, String ip, String des){
+    public int signUP(String name, String pass, String ip, String des){
         int id = getAuthID(name, pass);//TODO can i return id from insert statement?
         if(id >= 0){//user is registered from browser client
             insertIP(id, ip, des);
-            return;
+            return 2; //optimize to return inserted id.
         }
         try{//TODO limit num of signup per day.
-            stm.execute("insert into userinfo (NAME, PASS, IPNUMS) values ("+name+", "+pass+", "+1+");");
-        }catch(Exception e) { e.printStackTrace();  }
+            stm.execute("insert into userinfo (NAME, PASS, IPNUMS) values ('"+name+"', '"+pass+"', "+1+");");
+        }catch(Exception e) {
+            e.printStackTrace();  
+            return -1;
+        }
         insertIP(id, ip, des);
+        return 0;
     }
     public int getAuthID(String name, String pass){
         try{
-            ResultSet rs = stm.executeQuery("select ID from userinfo where NAME=\""+name+"\" AND PASS = \""+pass+"\";");
-            rs.next();
-            return rs.getInt(1);
-        }catch(Exception e) { e.printStackTrace(); }
-        return -1;
+            ResultSet rs = stm.executeQuery("select ID from userinfo where NAME='"+name+"' AND PASS = '"+pass+"';");
+            if(rs.next()){                
+                return rs.getInt(1); //return 0 if null
+	    }          
+        }catch(Exception e) {
+            e.printStackTrace(); 
+            return -1;
+        }
+        return 0;
     }
     public int getIPsNum(int id){
         try{
-            ResultSet rs = stm.executeQuery("select IPNUMS from userinfo where ID = (select ID from userips where userips.IP = \""+id+"\");");
+            ResultSet rs = stm.executeQuery("select IPNUMS from userinfo where ID = (select ID from userips where userips.IP = "+id+");");
             rs.next();
-            return rs.getInt(1);
-        }catch(Exception e) { e.printStackTrace();  }
-        return 0;
+            return rs.getInt(1); //return 0 if null
+        }catch(Exception e) {
+            e.printStackTrace();  
+            return -1;
+        }
     }
     public HashMap getUserActiveIPs(int id){
         try{

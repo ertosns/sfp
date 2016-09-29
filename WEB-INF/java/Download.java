@@ -4,6 +4,10 @@ import java.util.*;
 import java.io.*;
 import java.net.*;
 import com.github.axet.vget.VGet;
+import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 
 public class Download extends HttpServlet{
     boolean browser = true;
@@ -11,38 +15,79 @@ public class Download extends HttpServlet{
     HashMap<String, String> IPDesHash = null;
     Database database = null;
     String ENCODING = "UTF-8";
+    final Logger LGR = Logger.getLogger(this.toString());
+    ConsoleHandler ch = new ConsoleHandler();
+    public Download(){
+	ch.setLevel(Level.INFO);
+        LGR.setUseParentHandlers(false);
+        LGR.addHandler(ch);
+        LGR.setLevel(Level.INFO);
+    }   
+    public boolean cookiesHas(Cookie[] cookies, String name){
+        Cookie tmp = null;
+        for(int i = 0; i < cookies.length; i++){
+            if((tmp = cookies[i]).getValue().equals(name) || tmp.getName().equals(name)){
+                return true;
+            }
+	}
+        return false;
+    }
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
       throws IOException, ServletException{   	
         String name = decrypt(request.getParameter("name"));
         String pass = decrypt(request.getParameter("pass"));
         boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
-        boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));
+        boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));   
+        boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
+        boolean browser = Boolean.parseBoolean(decrypt(request.getParameter("browser")));
+        URL url = new URL("https://www.youtube.com/watch?v="+decrypt(request.getParameter("url")));
+        int len = 0;
+        int LLUI = -1;
         if(login||signup){
             database = new Database();
             int id = database.getAuthID(name, pass);
-            Cookie nameCookie = new Cookie(encrypt("name"), encrypt(name));
+            if(id == -1){
+                response.setStatus(500);
+                return;
+	    }
+            Cookie[] cookies = request.getCookies();
+            if(cookies != null && ((len = cookies.length) >=0)){
+                LLUI = Integer.parseInt(cookies[0].getValue());
+                for(int i = 1; i < len; i++){
+            
+	    if(cookiesHas(cookies, name) && cookiesHas(cookies, pass)){
+      
+            }   
+            Cookie nameCookie = new Cookie(encrypt("name"), encrypt());
             nameCookie.setMaxAge(60*60*24*365);
             Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
+            Cookie lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt());
             passCookie.setMaxAge(60*60*24*365);
-            if((signup && id<0) || (login && id >= 0)){
-                if(signup){
-                    database.signUp(name, pass);                
+            if(signup || (login && id > 0)){
+                if(signup){ // signup from browser.
+		   if(id>0){
+		       response.setStatus(401); // user already has an account!
+        	       return;
+                   }
+                   int success =  database.signUp(name, pass);                
+                   LGR.info("signup account done with with "+((success==-1)?"failure":"success"));
+                   if(success == -1){
+		       response.setStatus(500); //Server Error, Database error
+                       LGR.info("singup failed and 500 status code send to client");
+                       return;
+		   }
                 }
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
                 response.addCookie(nameCookie);
                 response.addCookie(passCookie);
-                response.sendRedirect("http://92.222.80.85:8080/sfp/index.html");
             }   
             else{
-                response.setStatus(401);
+                response.setStatus(401); //client Error, bad Authentication
                 response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
             }
             return;
         }
-        boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
-        boolean browser = Boolean.parseBoolean(decrypt(request.getParameter("browser")));
-        URL url = new URL("https://www.youtube.com/watch?v="+decrypt(request.getParameter("url")));
         if(!download){ // check if the url is available.
             HttpURLConnection con = (HttpURLConnection) url.openConnection();
             int code = con.getResponseCode();
@@ -60,7 +105,11 @@ public class Download extends HttpServlet{
         } else{ // if target is mobile send via TCP
             database = new Database();
             int id = database.getAuthID(name, pass); // make that secure. 
-            if(id < 0){
+	    if(id == -1){
+                response.setStatus(401);
+                return;
+	    }
+            else if(id == 0){
                 response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
                 return;
             }
@@ -108,33 +157,36 @@ public class Download extends HttpServlet{
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException{
         database = new Database();
-    	String key = request.getParameter("key");
     	String name = decrypt(request.getParameter("uname"));
         String pass = decrypt(request.getParameter("upass"));
         String ip = decrypt(request.getParameter("ip"));
         String des = decrypt(request.getParameter("des"));
         boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
         int id = database.getAuthID(name, pass);
-        if(signup){
-        	if(id>0){
-        		response.getOutputStream().write("you already has an account".getBytes(ENCODING));
-        		return;
-        	}
-        	database.signUP(name, pass, ip, des);
-        	return;
+        if(id == -1){
+            response.setStatus(401);
+	}
+        if(signup){//sign up from mobile 
+            if(id>0){
+    		response.getOutputStream().write("you already has an account".getBytes(ENCODING));
+       		return;
+       	}
+       	int success = database.signUP(name, pass, ip, des);
+            if(success == -1){
+               response.setStatus(401);
+            }
+            return;
         }
         if(id == 0){
             response.getOutputStream().write("authentication failed, wrong username or password".getBytes(ENCODING));
             return;
         }
-
         int ipsnum = database.getIPsNum(id);
-        if(ipsnum >= 5)
+        if(ipsnum >= 5){
         	response.setStatus(200);
-        else {
+	} else {
             database.insertIP(id, ip, des);
             response.setStatus(200);
-            
         }
     }
     public String encrypt(String message){
