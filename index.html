@@ -13,6 +13,9 @@
             <div class="header-tag" id = "login">
                 <a href="./login.html" class = "link"><p>log in</p></a>
             </div>
+            <div class="header-tag" id = "logout">
+                <a href="./login.html" class = "link"><p>log out</p></a>
+            </div>
             <div class="header-tag" id = "signup">
                 <a href="./signup.html" class = "link"><p>sign up</p></a>
             </div>
@@ -48,37 +51,66 @@
         </div>
     </footer>
     <script type = "text/javascript">
-        // chech if user loged int or not using cookies(read cookies) 
-        // accordingly adjust dom (dom manipulation)
-        function adjustDom(){ //TODO check cookies authentications
-            var cookiesList = document.cookie;
-            if(!cookiesList){ // check if cookeis has valid name&pass else cracker can fake it
-                document.getElementById("devices").style.display = "none";
-                document.getElementById("url-form").style.marginTop="220px";
-                document.getElementById("mobile-download-btn").style.display= "none";
-	       }
-	    }
+        function loginMode(){ //TODO check cookies authentications
+            document.getElementById("devices").style.display = "block"
+            document.getElementById("logout").style.display = "block"
+            document.getElementById("login").style.display = "none"
+            document.getElementById("signup").style.display = "none"
+            document.getElementById("url-form").style.marginTop="220px"
+            document.getElementById("mobile-download-btn").style.display= "block"
+	}
+        function logoutMode(){
+            document.getElementById("devices").style.display = "none";
+            document.getElementById("logout").style.display = "none";
+            document.getElementById("login").style.display = "block"
+            document.getElementById("sigup").style.display = "block"
+            document.getElementById("url-form").style.marginTop="220px";
+            document.getElementById("mobile-download-btn").style.display= "none";            
+        }
         function getSong(){
             var v = document.getElementById("urlbar").value;
             if(!(v.startsWith("https://www.youtube.com/watch?v=")||
                 v.startsWith("http://www.youtube.com/watch?v=")||
                 v.startsWith("www.youtube.com/watch?v=")||
                 v.startsWith("youtube.com/watch?v="))) {
-		        alert("bad URL")
-		    return
-	    }
-        //try catch doesn't work if 404 or any http error, then why it's used?
-        /*TODO front-endS
-				solve cors problem and make http request to youtube
-				(if you solved cors you will be able to receive xhr response) read response
-				if(size of response if relativley small) {it's bad url id => halt here and inform user id funkin bad id} else {it works}
-			*/
-        window.location.href = "http://92.222.80.85:8080/sfp/getsong?signup=false&login=false&download=true&pass=null&name=null&browser=true&url="+v.split("?v=")[1];
-
-			/*TODO back-end
-				must limit number of download per day for specific ip (that prevent someone's script from block server via to many downloads may be many process for continues downloads) though it will still vulnerable if cracker can get use different ip for x of downloads)
-			*/
-		}
-        adjustDom()
+		alert("bad URL")
+            }
+            else{
+                window.location.href = "http://92.222.80.85:8080/sfp/getsong?"+
+                "signup=false&login=false&download=true&pass=null&name=null&browser=true&url="+v.split("?v=")[1]
+            }
+        }
+        function getCookie(cname){
+            cookies = document.cookie.split(';')
+            for(int i = 0; i < cookies; i++){
+                keyValuePair = cookies[i].split(';')
+                if(keyValuePair[0] == cname){
+                    return keyValuePair[1]
+                }
+            }
+            return -1 
+        }
+        function init(){
+            cookies = document.cookie.split(';')
+            lastLogedUserIndex = getCookie('lastlogeduserindex')
+            lastLogedUserName = getCookie('lastlogedusername'+lastLogedUserIndex)
+            lastLogedUserPass = getCookie('lastlogeduserpass'+lastLogedUserIndex)
+            if(lastLogedUserPass == -1 ||lastLogeduserName == -1){
+                logoutMode()
+                return
+            }
+            checkAuthRequest = new XMLHttpRequest()
+            checkAuthRequest.setReadyStateChange = function(){
+                if(this.status = 401){
+                    window.location.href = "http://92.222.80.85:8080/sfp/login.html"
+                }
+                loginMode()
+            }
+            checkAuthRequest.open('GET', "http://92.222.80.85:8080/getsong?"+
+            "login=true&signup=false&checkuser=true&download=false&browser=true&url=nullurl&name="+
+            lastLogedUserName+"&pass="+lastLogedUserPass))
+            checkAuthRequest.send()
+        }init()
+        document.getElementById("logout").addEventListener('click', logoutMode)    
     </script>
 </body>

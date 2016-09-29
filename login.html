@@ -53,16 +53,20 @@
             checkValidity(pass)
             //var remember = document.getElementById("remember").checked;
             var request = new XMLHttpRequest()
-            equest.onreadystatechange = function() {
-                if(this.readyState == 4 && this.status  == 401){
+            request.onreadystatechange = function() {
+                if(this.status == 401){
                     document.getElementById("errorbox").style.display = "block"
                     var loginpar = document.getElementById("loginError")
                     //TODO optimize to be more specific should check username or password or both.
                     if(!loginpar.childNodes[0]){
-                        loginpar.appendChild(document.createTextNode("check your username or password or both!"))
-                    } else{
-                        loginpar.replaceChild(document.createTextNode("check your username or password or both!"), loginpar.childNodes[0])
+                        loginpar.appendChild(document.createTextNode("Bad AUTH! please check you password or username or both!"))
+                    } 
+                    else{
+                        loginpar.replaceChild(document.createTextNode("Bad Auth! please check you password or username or both!"), loginpar.childNodes[0])
                     }
+                }
+                else if(this.status == 200){
+                    window.location.href="http://92.222.80.85:8080/sfp/"
                 }
             } 
 	        request.open("GET", "http://92.222.80.85:8080/sfp/getsong?signup=false&name="+name+"&pass="+pass+

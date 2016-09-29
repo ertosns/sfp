@@ -64,8 +64,22 @@
                         loginpar.replaceChild(document.createTextNode("you already an user"), loginpar.childNodes[0])
                     }
                 }
+                else if(this.status == 500){
+                    document.getElementById("errorbox").style.display = "block"
+                    var loginpar = document.getElementById("loginError")
+                    //TODO optimize to be more specific should check username or password or both.
+                    if(!loginpar.childNodes[0]){
+                        loginpar.appendChild(document.createTextNode("Ops! Server Error. please try later!"))
+                    }
+                    else{
+                        loginpar.replaceChild(document.createTextNode("Ops! Server Error, please try later!"), loginpar.childNodes[0])
+                    }
+                }
+                else if (this.status == 200){
+                    window.location.href = "http://92.222.80.85:8080/sfp/"
+                }
             } 
-	        request.open("GET", "http://92.222.80.85:8080/sfp/getsong?name="+name+"&pass="+pass+
+	    request.open("GET", "http://92.222.80.85:8080/sfp/getsong?name="+name+"&pass="+pass+
     				"&signup=true&login=false&browser=true&download=false&url=nullurl")
             request.send()
         }
