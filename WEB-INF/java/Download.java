@@ -23,14 +23,31 @@ public class Download extends HttpServlet{
         LGR.addHandler(ch);
         LGR.setLevel(Level.INFO);
     }   
-    public boolean cookiesHas(Cookie[] cookies, String name){
-        Cookie tmp = null;
+    public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair){
+        boolean cName = false;
+        boolean cPass = false;
+        int authIndex = 0;
+        String currentName = name;
+        Cookie tmpCookie = null;
+        Object[] obj = new Object[2];
         for(int i = 0; i < cookies.length; i++){
-            if((tmp = cookies[i]).getValue().equals(name) || tmp.getName().equals(name)){
-                return true;
+            if((tmpCookie = cookies[i]).getValue().equals(currentName) || tmpCookie.getName().equals(currentName)){
+                if(cName){
+                    obj[0] = new Boolean(true);
+                    return obj;
+                }
+                if(pair){
+                    cName = true;
+                    currentName = pass;
+                    continue;
+                }
+                obj[0] = new Boolean(true);
+                obj[1] = (tmpCookie.getValue().equals(currentName))? tmpCookie.getValue() : tmpCookie.getName();
+                return obj;
             }
-	}
-        return false;
+	    }
+        obj[0] = new Boolean(false);
+        return obj;
     }
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
@@ -42,41 +59,51 @@ public class Download extends HttpServlet{
         boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
         boolean browser = Boolean.parseBoolean(decrypt(request.getParameter("browser")));
         URL url = new URL("https://www.youtube.com/watch?v="+decrypt(request.getParameter("url")));
-        int len = 0;
-        int LLUI = -1;
+        Cookie nameCookie = null;
+        Cookie passCookie = null;
+        Cookie lastLogedUserIndex = null;
+        Cookie numOfLogedUsers = null;
         if(login||signup){
             database = new Database();
             int id = database.getAuthID(name, pass);
             if(id == -1){
                 response.setStatus(500);
                 return;
-	    }
+	        }
             Cookie[] cookies = request.getCookies();
-            if(cookies != null && ((len = cookies.length) >=0)){
-                LLUI = Integer.parseInt(cookies[0].getValue());
-                for(int i = 1; i < len; i++){
-            
-	    if(cookiesHas(cookies, name) && cookiesHas(cookies, pass)){
-      
-            }   
-            Cookie nameCookie = new Cookie(encrypt("name"), encrypt());
-            nameCookie.setMaxAge(60*60*24*365);
-            Cookie passCookie = new Cookie(encrypt("pass"), encrypt(pass));
-            Cookie lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt());
-            passCookie.setMaxAge(60*60*24*365);
+           if(cookies != null && cookies.length>=0){
+	            if(Boolean.parseBoolean((String)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0]))){
+                    lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt((String)(cookiesHas(cookies,
+                    encrypt("lastlogeduserindex"), null, false)[1])));
+                    lastLogedUserIndex.setMaxAge(7776000); //three month
+                }
+                else{
+                    int llui = Integer.parseInt((String)(cookiesHas(cookies,encrypt("lastlogeduserindex"), null, false)[1]));
+                    llui++;
+                    nameCookie = new Cookie(encrypt("name"+llui), encrypt(name));
+                    nameCookie.setMaxAge(7776000);
+                    passCookie = new Cookie(encrypt("pass"+llui), encrypt(pass));
+                    passCookie.setMaxAge(7776000);
+                    lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt(new String(llui+"")));
+                    lastLogedUserIndex.setMaxAge(7776000);
+                    numOfLogedUsers = new Cookie(encrypt("numoflogedusers"), encrypt(((String)(cookiesHas(cookies, 
+                        "numOfLogedUsers", null, false)[1]))));
+                    numOfLogedUsers.setMaxAge(7776000);
+                }   
+            }
             if(signup || (login && id > 0)){
                 if(signup){ // signup from browser.
-		   if(id>0){
-		       response.setStatus(401); // user already has an account!
-        	       return;
-                   }
-                   int success =  database.signUp(name, pass);                
-                   LGR.info("signup account done with with "+((success==-1)?"failure":"success"));
-                   if(success == -1){
-		       response.setStatus(500); //Server Error, Database error
-                       LGR.info("singup failed and 500 status code send to client");
-                       return;
-		   }
+		            if(id>0){
+		                response.setStatus(401); // user already has an account!
+        	            return;
+                    }
+                    int success =  database.signUp(name, pass);                
+                    LGR.info("signup account done with with "+((success==-1)?"failure":"success"));
+                    if(success == -1){
+		                response.setStatus(500); //Server Error, Database error
+                        LGR.info("singup failed and 500 status code send to client");
+                        return;
+		            }
                 }
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
                 response.addCookie(nameCookie);
@@ -105,22 +132,22 @@ public class Download extends HttpServlet{
         } else{ // if target is mobile send via TCP
             database = new Database();
             int id = database.getAuthID(name, pass); // make that secure. 
-	    if(id == -1){
+	        if(id == -1){
                 response.setStatus(401);
                 return;
-	    }
+	        }
             else if(id == 0){
                 response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
                 return;
             }
             try{
                 IPDesHash = database.getUserActiveIPs(id);
-                }catch(Exception e){
-                    // user isn't registered with his mobil ip. 
-                    // window or new page should open and inform user to install the app with app link and how it work.
-                    // response should be done here, and close connection
-                    return;
-                }
+            }catch(Exception e){
+                // user isn't registered with his mobil ip. 
+                // window or new page should open and inform user to install the app with app link and how it work.
+                // response should be done here, and close connection
+                return;
+            }
             ArrayList<Integer> idleIPsIds = new ArrayList<Integer>();
             int ipSize = IPDesHash.size();
             StringBuilder inactiveIPsDes = new StringBuilder("the following devices aren't accessible ");
@@ -165,7 +192,7 @@ public class Download extends HttpServlet{
         int id = database.getAuthID(name, pass);
         if(id == -1){
             response.setStatus(401);
-	}
+	    }
         if(signup){//sign up from mobile 
             if(id>0){
     		response.getOutputStream().write("you already has an account".getBytes(ENCODING));
@@ -184,7 +211,8 @@ public class Download extends HttpServlet{
         int ipsnum = database.getIPsNum(id);
         if(ipsnum >= 5){
         	response.setStatus(200);
-	} else {
+	    } 
+        else{
             database.insertIP(id, ip, des);
             response.setStatus(200);
         }
