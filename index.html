@@ -93,9 +93,9 @@
         function init(){
             cookies = document.cookie.split(';')
             lastLogedUserIndex = getCookie('lastlogeduserindex')
-            lastLogedUserName = getCookie('lastlogedusername'+lastLogedUserIndex)
-            lastLogedUserPass = getCookie('lastlogeduserpass'+lastLogedUserIndex)
-            if(lastLogedUserPass == -1 ||lastLogeduserName == -1){
+            lastLogedUserName = getCookie('name'+lastLogedUserIndex)
+            lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
+            if(lastLogedUserPass == -1 || lastLogeduserName == -1){
                 logoutMode()
                 return
             }

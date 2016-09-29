@@ -63,6 +63,8 @@ public class Download extends HttpServlet{
         Cookie passCookie = null;
         Cookie lastLogedUserIndex = null;
         Cookie numOfLogedUsers = null;
+        int llui = 0;
+        int nolu = 0;
         if(login||signup){
             database = new Database();
             int id = database.getAuthID(name, pass);
@@ -74,20 +76,24 @@ public class Download extends HttpServlet{
            if(cookies != null && cookies.length>=0){
 	            if(Boolean.parseBoolean((String)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0]))){
                     lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt((String)(cookiesHas(cookies,
-                    encrypt("lastlogeduserindex"), null, false)[1])));
+                    encrypt("lastlogeduserindex"), null, false)[1]))); //save doesn't require check.
                     lastLogedUserIndex.setMaxAge(7776000); //three month
                 }
                 else{
-                    int llui = Integer.parseInt((String)(cookiesHas(cookies,encrypt("lastlogeduserindex"), null, false)[1]));
-                    llui++;
+                    try{
+                        llui = Integer.parseInt((String)(cookiesHas(cookies,encrypt("lastlogeduserindex"), null, false)[1]));
+                        nolu = Integer.parseInt((String)(cookiesHas(cookies,encrypt("numOfLogedUsers"), null, false)[1]));
+                    } catch(Exception e){
+                        llui = 0;
+                        nolu = 1;
+                    }
                     nameCookie = new Cookie(encrypt("name"+llui), encrypt(name));
                     nameCookie.setMaxAge(7776000);
                     passCookie = new Cookie(encrypt("pass"+llui), encrypt(pass));
                     passCookie.setMaxAge(7776000);
                     lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt(new String(llui+"")));
                     lastLogedUserIndex.setMaxAge(7776000);
-                    numOfLogedUsers = new Cookie(encrypt("numoflogedusers"), encrypt(((String)(cookiesHas(cookies, 
-                        "numOfLogedUsers", null, false)[1]))));
+                    numOfLogedUsers = new Cookie(encrypt("numoflogedusers"), encrypt(new String(nolu+"")));
                     numOfLogedUsers.setMaxAge(7776000);
                 }   
             }
