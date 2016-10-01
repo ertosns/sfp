@@ -50,7 +50,7 @@ public class Database{
         }
         return 0;
     }
-	// sign up from website.
+    // sign up from website.
     public int signUp(String name, String pass){ 
         try{//TODO limit num of signup per day.
             stm.execute("insert into userinfo (NAME, PASS) values ('"+name+"', '"+pass+"');");
@@ -81,7 +81,7 @@ public class Database{
             ResultSet rs = stm.executeQuery("select ID from userinfo where NAME='"+name+"' AND PASS = '"+pass+"';");
             if(rs.next()){                
                 return rs.getInt(1); //return 0 if null
-	    }          
+        }          
         }catch(Exception e) {
             e.printStackTrace(); 
             return -1;
