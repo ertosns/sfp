@@ -69,12 +69,13 @@ public class Download extends HttpServlet{
             database = new Database();
             int id = database.getAuthID(name, pass);
             if(id == -1){
-                response.setStatus(500);
-                return;
-	        }
+                LGR.info("can't find input username, and password while logging in");
+		//  response.setStatus(500);
+		// return;
+            }
             Cookie[] cookies = request.getCookies();
-           if(cookies != null && cookies.length>=0){
-	            if(Boolean.parseBoolean((String)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0]))){
+            if(cookies != null && cookies.length>=0){
+	            if((boolean)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0])){
                     lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt((String)(cookiesHas(cookies,
                     encrypt("lastlogeduserindex"), null, false)[1]))); //save doesn't require check.
                     lastLogedUserIndex.setMaxAge(7776000); //three month
@@ -106,9 +107,9 @@ public class Download extends HttpServlet{
                     int success =  database.signUp(name, pass);                
                     LGR.info("signup account done with with "+((success==-1)?"failure":"success"));
                     if(success == -1){
-		                response.setStatus(500); //Server Error, Database error
-                        LGR.info("singup failed and 500 status code send to client");
-                        return;
+			//            response.setStatus(500); //Server Error, Database error
+			//   LGR.info("singup failed and 500 status code send to client");
+			//  return;
 		            }
                 }
                 //TODO use basic authentication to enbale user the option to use cookeis or not.
