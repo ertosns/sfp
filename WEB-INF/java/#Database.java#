@@ -1,6 +1,5 @@
 import java.sql.*;
 import java.util.*;
-
 public class Database{
     private String URL = "jdbc:mysql://localhost/";
     private final String DRIVER = "com.mysql.jdbc.Driver";
@@ -81,7 +80,7 @@ public class Database{
             ResultSet rs = stm.executeQuery("select ID from userinfo where NAME='"+name+"' AND PASS = '"+pass+"';");
             if(rs.next()){                
                 return rs.getInt(1); //return 0 if null
-            }          
+        }          
         }catch(Exception e) {
             e.printStackTrace(); 
             return -1;
