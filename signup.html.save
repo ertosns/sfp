@@ -10,8 +10,8 @@
             <div class="header-tag" id = "help">
                 <a href="./help" class = "link"><p>help</p></a>
             </div>
-            <div class="header-tag" id = "signup">
-                <a href="http://92.222.80.85:8080/sfp/signup.html" class = "link"><p>signup</p></a>
+            <div class="header-tag" id = "login">
+                <a href="http://92.222.80.85:8080/sfp/login.html" class = "link"><p>login</p></a>
             </div>
         </div>
     </header>
@@ -26,7 +26,7 @@
                 </label>
             </fieldset>
             <fieldset class = "action">
-                <button class = "btn" type = "button" id="loginbtn">login</button>
+                <button class = "btn" type = "button" id="signupbtn">signup</button>
                 <!--<label>
                     <input id = "remember" type="checkbox" > stay signed in
                 </label>-->	
@@ -34,7 +34,7 @@
         </form>
         <div id = "errorbox">
             <p id = "loginError"></p>
-	</div>
+	    </div>
     </main>
     <footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;box-shadow: 0 -5px 5px #888888">
         <div style = "float:left; width:60%;">
@@ -45,36 +45,34 @@
         </div>
     </footer>
     <script type = "text/javascript">
-        document.getElementById("loginbtn").addEventListener('click', login, false)
-        function login(){
+        document.getElementById("signupbtn").addEventListener('click', signup, false)
+        function signup(){
             var name = document.getElementById("username").value
             var pass = document.getElementById("password").value
             checkValidity(name)
             checkValidity(pass)
-            //var remember = document.getElementById("remember").checked;
+            //var remember = document.getElementById("remember").checked
             var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
-                if(this.status == 401){
+                if(this.readyState == 4 && this.status  == 401){
                     document.getElementById("errorbox").style.display = "block"
                     var loginpar = document.getElementById("loginError")
                     //TODO optimize to be more specific should check username or password or both.
                     if(!loginpar.childNodes[0]){
-                        loginpar.appendChild(document.createTextNode("Bad AUTH! please check you password or username or both!"))
-                    } 
-                    else{
-                        loginpar.replaceChild(document.createTextNode("Bad Auth! please check you password or username or both!"), loginpar.childNodes[0])
+                        loginpar.appendChild(document.createTextNode("you already an user"))
+                    } else{
+                        login	par.replaceChild(document.createTextNode("you already an user"), loginpar.childNodes[0])
                     }
-                }
-                else if(this.status == 200){
-                    window.location.href="http://92.222.80.85:8080/sfp/"
+                }else{
+                    window.location.href = "http://92.222.80.85:8080/sfp/"
                 }
             } 
-	    request.open("GET", "http://92.222.80.85:8080/sfp/getsong?signup=false&name="+name+"&pass="+pass+
-    				"&login=true&browser=true&download=false&url=nullurl")
+	    request.open("GET", "http://92.222.80.85:8080/sfp/getsong?name="+name+"&pass="+pass+
+    				"&signup=true&login=false&browser=true&download=false&url=nullurl")
             request.send()
-       }
-       function checkValidity(message){
-           return message	
-       }
+        }
+        function checkValidity(message){
+            return message
+        }
   </script>
 </body>

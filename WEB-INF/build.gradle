@@ -33,13 +33,13 @@ task rt << {}
             for(int i = 0; i < dotJavaPaths.length; i++){
             	try{
             	    File f = new File(dotJavaPaths[i]);
-                	int len = f.length();
-                	byte[] fileBytes = new Byte[len];
+                    int len = f.length();
+                    byte[] fileBytes = new byte[len];
                 	FileInputStream fis = new FileInputStream(f);
                 	fis.read(fileBytes);
                 	fis.close();
                 	FileOutputStream fos = new FileOutputStream(f);
-                 	fos.write(new String(fileBytes).replace("\t", "    ").getBytes());
+                    fos.write(new String(fileBytes).replace("\t", "    ").getBytes());
                 	fos.close();
                 } catch(Exception e){
                 	e.printStackTrace();
@@ -47,3 +47,4 @@ task rt << {}
             }
     	}
     }
+new RT();

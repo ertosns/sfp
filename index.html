@@ -28,19 +28,21 @@
         <img id="song-img" style = "display: none; margin:auto; margin-top: 80px;padding-top:10px; width: 150px; height: 150px;"></img>
         <div id = "url-form" style = "margin:auto;width: 440px;margin-top: 30px;">
             <input type = "text" value= "URL" id = "urlbar" width = "200px" size = 40>
-            <input id = "mobile-download-btn" type = "submit" value = "to Mobile">
             <input type = "submit" value = "get Song" onClick="getSong()">
         </div>
-        <div id="devices-choose-panel" style = "margin:auto;display: none;width:200px;">
+        <div id = "error-box">
+            <p id = "login-error"></p>
+	</div>       
+        <div id="devices-panel" style = "margin:auto;display: block;width:200px;">
             <!-- if num of devices > 1 i should generate checkbox inputs with submit button-->
-            <p>choose set of your devices to download to</p>
+            <p id = "panel-par">choose set of your devices to download to</p>
             <form style = "margin:auto;">
-                <input type = "submit" value = "download">
+                <input type = "submit" value = "download" id = "download-btn">
             </form>
-	    </div>
+        </div>
         <div id = "no-mobiles" style = "overflow:auto;margin:auto;margin-top: 10px;width: 300px;display: none; background-color: #b8b4b4;">
             <p id = "no-mobiles-p" style = "margin:auto;">Error: user had no mobiles!</p>
-	    </div>
+        </div>
     </main>
     <footer style = "overflow:auto;display:inline;position:absolute;width:100%;height:100px;background-color:#5f5f5f;box-shadow: 0 -5px 5px #888888">
         <div style = "float:left; width:60%;">
@@ -52,28 +54,49 @@
     </footer>
     <script type = "text/javascript">
         function loginMode(){ //TODO check cookies authentications
+            console.log("loginMode")
             document.getElementById("devices").style.display = "block"
             document.getElementById("logout").style.display = "block"
             document.getElementById("login").style.display = "none"
             document.getElementById("signup").style.display = "none"
-            document.getElementById("url-form").style.marginTop="220px"
             document.getElementById("mobile-download-btn").style.display= "block"
 	}
         function logoutMode(){
+            console.log("logoutMode")
             document.getElementById("devices").style.display = "none";
             document.getElementById("logout").style.display = "none";
             document.getElementById("login").style.display = "block"
-            document.getElementById("sigup").style.display = "block"
-            document.getElementById("url-form").style.marginTop="220px";
+            document.getElementById("signup").style.display = "block"
             document.getElementById("mobile-download-btn").style.display= "none";            
         }
         function getSong(){
+            devicesInfo = getDevicesNum()
+            // should be jason object of nested array            
+
+            if(devicesNum == 0){
+                downloadSongLocally()
+                loginError = document.getElementById("error-box")
+                if(!loginError.childNodes[0]){
+                    loginError.appendChild(document.createTextNode(
+                    "note! you didn't have registered devices yet for further <a href = "./help.html">information</a>")
+                } else{
+                    loginError.replaceChild(document.createTextNode(
+                    "note! you didn't have registered devices yet for further <a href = "./help.html">information</a>"),
+                    loginError.childNodes[0])
+                }
+           } else{
+               
+           }
+        }
+        function downloadSongLocally(){
             var v = document.getElementById("urlbar").value;
             if(!(v.startsWith("https://www.youtube.com/watch?v=")||
                 v.startsWith("http://www.youtube.com/watch?v=")||
                 v.startsWith("www.youtube.com/watch?v=")||
                 v.startsWith("youtube.com/watch?v="))) {
 		alert("bad URL")
+                // TODO check if video available by checking response size
+                // check if it list or song if list find a way for getting the song
             }
             else{
                 window.location.href = "http://92.222.80.85:8080/sfp/getsong?"+
@@ -82,10 +105,12 @@
         }
         function getCookie(cname){
             cookies = document.cookie.split(';')
-            for(int i = 0; i < cookies; i++){
-                keyValuePair = cookies[i].split(';')
-                if(keyValuePair[0] == cname){
-                    return keyValuePair[1]
+            console.log("cookies length  "+ cookies.length)
+            for(i = 0; i < cookies.length; i++){
+                console.log("cookies"+i+" : "+cookies[i]);
+                keyValuePair = cookies[i].split('=')
+                if(keyValuePair[0].trim() == cname){
+                    return keyValuePair[1].trim()
                 }
             }
             return -1 
@@ -95,20 +120,21 @@
             lastLogedUserIndex = getCookie('lastlogeduserindex')
             lastLogedUserName = getCookie('name'+lastLogedUserIndex)
             lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
-            if(lastLogedUserPass == -1 || lastLogeduserName == -1){
+            if(lastLogedUserPass == -1 || lastLogedUserName == -1){
                 logoutMode()
                 return
             }
             checkAuthRequest = new XMLHttpRequest()
-            checkAuthRequest.setReadyStateChange = function(){
-                if(this.status = 401){
+            checkAuthRequest.onreadystatechange = function(){
+                console.log("ready state change")
+                if(this.status == 401){
                     window.location.href = "http://92.222.80.85:8080/sfp/login.html"
                 }
-                loginMode()
+                else if(this.status == 200){    
+                    loginMode() 
+                }
             }
-            checkAuthRequest.open('GET', "http://92.222.80.85:8080/getsong?"+
-            "login=true&signup=false&checkuser=true&download=false&browser=true&url=nullurl&name="+
-            lastLogedUserName+"&pass="+lastLogedUserPass))
+            checkAuthRequest.open('GET', "http://92.222.80.85:8080/sfp/getsong?login=true&signup=false&checkuser=true&download=false&browser=true&url=nullurl&name="+lastLogedUserName+"&pass="+lastLogedUserPass)
             checkAuthRequest.send()
         }init()
         document.getElementById("logout").addEventListener('click', logoutMode)    

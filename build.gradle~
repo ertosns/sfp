@@ -1,0 +1,22 @@
+task rt << {}
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+public class RT{
+    public RT(){
+        String[] filesPath = new String[2];
+        filesPath[0] = "./WEB-INF/java/Download.java";
+        filesPath[1] =  "./WEB-INF/java/Database.java";
+        for(int i = 0; i < filesPath.size(); i++){
+            File f = new File(filesPath[i]);
+            int len = f.length();
+            byte[] fileBytes = new byte[len];
+            new FileInputStream(f).read(fileBytes);
+            String freeTabsFileString = new String(fileBytes).replaceAll("\t", "    ");
+            new FileOutputStream(f).write(freeTabsFileString.getBytes());
+        }
+    }
+}
+RT rt = new RT();
+
+            

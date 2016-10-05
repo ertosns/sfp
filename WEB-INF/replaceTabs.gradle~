@@ -1,0 +1,19 @@
+task rt << {}
+import java.io.File;
+import java.io.FileInpustStream;
+import java.io.FileOutputStream;
+public class RT{
+    String filesPath = {"./java/Download.java", "./java.Database.java"}
+    public RT(){
+        for(int i = 0; i < filesPath.size(); i++){
+            File f = new File(filesPath[0]);
+            int len = f.length;
+            byte[] fileBytes = new byte[len];
+            String freeTabsFileString = new String(fis.read(new FileInputStream(f))).replaceAll("\t", "    ");
+            new FileOuputStream(f).write(freeTabsfileString.getBytes());
+        }
+    }
+}
+new RT()
+
+            
