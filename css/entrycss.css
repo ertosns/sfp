@@ -1,61 +1,39 @@
-body{
+body {
 	width: 100%;
 	height: 100%;
 	margin: 0;
-	float: center;
 }
-header{
-	overflow: auto;
+header {
 	width: 100%;
-	position: relative;
-	background-color: #5f5f5f;
-    color: #f1f1f1;
+	color: #f1f1f1;
+    background-color: #5f5f5f;
     box-shadow: 0 5px 5px #888888
 }
-main{
+main {
 	width: 80%;
-	position: relative;
 	margin: auto;
-	margin-bottom: 0;
-	margin-top, margin-bottom: 40px;
-	display: block;
+
 }
-footer{
+footer {
 	width: 100%;
-	position: relative;
+	height:100px;
+	position:absolute;
 	bottom: 0px;
-	background-color: #5f5f5f;
     color: #f1f1f1;
-}
-.header-tag{
-	overflow: hidden;
-	position: relative;
-	float: right;
-	height: 50px; 
-	width: 60px;
-	margin: 0;
-	padding: 0;
-}
-.link{
+    background-color:#5f5f5f;
+    box-shadow: 0 -5px 5px #888888
+}		
+a {
 	text-decoration: none;
-	text-color: white;
-}
-a{
 	color: inherit;
 }
-
-form {
+form, input {
   border-radius: 5px;
-  font: 14px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif;
-  overflow: hidden;
 }
-fieldset {
-  border: 0;
-  margin: 0;
-  padding: 0;
-}
-input {
-  border-radius: 5px;
-  font: 14px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif;
-  margin: 0;
+.header-tag {
+	height: 50px; 
+	width: 60px;	
+	margin: 0;
+	padding: 0;
+	float: right;
 }

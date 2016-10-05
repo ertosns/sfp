@@ -49,6 +49,7 @@ public class Download extends HttpServlet{
         obj[0] = new Boolean(false);
         return obj;
     }
+    // goGet is for login, signup, check valid user, download locally, download to phones
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
       throws IOException, ServletException{       
@@ -56,9 +57,10 @@ public class Download extends HttpServlet{
         String pass = decrypt(request.getParameter("pass"));
         boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
         boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));   
-        boolean download = Boolean.parseBoolean(decrypt(request.getParameter("download")));
-        boolean browser = Boolean.parseBoolean(decrypt(request.getParameter("browser")));
         boolean checkUser = Boolean.parseBoolean(decrypt(request.getParameter("checkuser")));
+        boolean forceDownload = Boolean.parseBoolean(decrypt(request.getParameter("forcedownload")));
+        boolean mobilesDownload = Boolean.parseBoolean(decrypt(request.getParameter("mobilesdownload")));
+        boolean devicesInfo = Boolean.parseBoolean(decrypt(request.getParameter("devicesInfo")));
         URL url = new URL("https://www.youtube.com/watch?v="+decrypt(request.getParameter("url")));
         Cookie nameCookie = null;
         Cookie passCookie = null;
@@ -66,19 +68,19 @@ public class Download extends HttpServlet{
         Cookie numOfLogedUsers = null;
         int llui = 0;
         int nolu = 0;
-        if(login||signup){
+        if(login||signup||checkUser){
             database = new Database();
             int id = database.getAuthID(name, pass);
-            if(id == -1){
-                LGR.info("can't find input username, and password while logging in");
+            // database Error
+            if(id == -1){                
                 response.setStatus(500);
                 return;
             }
-            LGR.info("BEFORE CHECKUSER WITH checkuser = "+checkUser+" , with id = "+id);
+            // validate user while login.
             if(checkUser == true){
                 if(id > 0){
                     response.setStatus(200);
-                } else{
+                } else{ // id start at 1, so no valid user
                     response.setStatus(401);
                 }
                 return;
@@ -136,34 +138,31 @@ public class Download extends HttpServlet{
             }
             return;
         }
-        if(!download){ // check if the url is available.
-            HttpURLConnection con = (HttpURLConnection) url.openConnection();
-            int code = con.getResponseCode();
-            if(code == 200) response.sendError(200);
-            else response.setStatus(404);
-           return;
-        }
-        if (browser) { // if target is browser force download
-            try{
+        else if (forceDownload) { // if target is browser force download
+            try {
                 forceBrowserFileDownload(url, response);
-            }catch(Exception e){ 
+            } catch (Exception e) { 
                 // should inform user
                e.printStackTrace();
             }
-        } else{ // if target is mobile send via TCP
+        }
+        else if (devicesInfo) {
+            // return json object of devices names appended with model and unique id (id for response)
+        } 
+        else if (mobilesDownload) { // if target is mobile send via TCP
             database = new Database();
             int id = database.getAuthID(name, pass); // make that secure. 
-            if(id == -1){
+            if(id == -1) {
                 response.setStatus(401);
                 return;
             }
-            else if(id == 0){
+            else if (id == 0) {
                 response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
                 return;
             }
-            try{
+            try {
                 IPDesHash = database.getUserActiveIPs(id);
-            }catch(Exception e){
+            } catch (Exception e) {
                 // user isn't registered with his mobil ip. 
                 // window or new page should open and inform user to install the app with app link and how it work.
                 // response should be done here, and close connection
