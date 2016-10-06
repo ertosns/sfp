@@ -44,6 +44,10 @@
         </div>
     </footer>
     <script type = "text/javascript">
+        cookies = document.cookie.split(';')
+        lastLogedUserIndex = getCookie('lastlogeduserindex')
+        lastLogedUserName = getCookie('name'+lastLogedUserIndex)
+        lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
         function loginMode(){ //TODO check cookies authentications
             console.log("loginMode")
             document.getElementById("devices").style.display = "block"
@@ -72,7 +76,8 @@
 		        alert("bad URL")
             }
             else{
-                updateAuth()
+                name = getCookie('name'+lastLogedUserIndex)
+                pass = getCookie('pass'+lastLogedUserIndex)
                 window.location.href = "http://92.222.80.85:8080/sfp/getsong?"+
                 "forcedownload=true&mobilesdownload=true&name="+name+"&pass="+pass+"&url="+v.split("?v=")[1]
             }
@@ -90,10 +95,6 @@
             return -1 
         }
         function init(){
-            cookies = document.cookie.split(';')
-            lastLogedUserIndex = getCookie('lastlogeduserindex')
-            lastLogedUserName = getCookie('name'+lastLogedUserIndex)
-            lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
             if(lastLogedUserPass == -1 || lastLogedUserName == -1){
                 logoutMode()
                 return
