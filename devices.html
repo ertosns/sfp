@@ -1,0 +1,146 @@
+<!html>
+<head>
+    <link rel="stylesheet" type"text/css" href="./css/template.css"/>
+    <link rel="stylesheet" type"text/css" href="./css/devices-extra.css"/>    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <meta name="viewport" content = "device-width, initial-scale=1">
+</head>
+<body>
+    <div class = "page">
+    <header>
+        <img id = "logo" src="./img/logo" ></img>
+        <div style = "float: right;display: flex;">
+            <div class="header-tag" id = "devices">
+                <a href="./devices.html" class = "link"><p>Devices<p></a>
+            </div>
+            <div class="header-tag" id = "login">
+                <a href="./login.html" class = "link"><p>Log In</p></a>
+            </div>
+            <div class="header-tag" id = "logout">
+                <a href="./login.html" class = "link"><p>Log Out</p></a>
+            </div>
+            <div class="header-tag" id = "signup">
+                <a href="./signup.html" class = "link"><p>Sign Up</p></a>
+            </div>
+            <div class="header-tag" id = "help">
+                <a href="./guide.html" class = "link"><p>Guide</p></a>
+            </div>
+	    </div>
+    </header>
+    <main>
+        <div class = "devices-panel" style = "width: 300px; height: 400px; margin: auto; display: block; margin-top: 250px;">
+            <div style = "display: block;">
+                <p class = "devices-note"></p>
+            </div>
+            <div class = "panel" style = "display: none;">
+                <div class ="devices-checkboxes" >            
+                </div>
+                <div style = "width: 100%; margin: auto;">
+                    <input type="submit" value="Done">
+                </div>
+            </div>
+        </div>
+	</main>
+    </div>
+    <footer>
+        <div style = "float: left; width:50%;">
+            <p>download any youtube or vimeo (high quality audio song) to your mobiles or local device using any other computer or mobile, sign up free account, download mobile app on your target mobiles, copy song url, and enjoy art!</p>
+        </div>
+        <div style = "float:right;">
+            <p>contact info</p>
+        </div>
+    </footer>
+    <script type = "text/javascript">
+        cookies = document.cookie.split(';')
+        lastLogedUserIndex = getCookie('lastlogeduserindex')
+        lastLogedUserName = getCookie('name'+lastLogedUserIndex)
+        lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
+        var devices
+        function init(){
+            // check user authentication
+            if(lastLogedUserPass == -1 || lastLogedUserName == -1){
+                window.location.href = "http://92.222.80.85:8080/sfp/login.html"
+            }
+            checkAuthRequest = new XMLHttpRequest()
+            checkAuthRequest.onreadystatechange = function(){
+                if(this.status == 401){
+                    window.location.href = "http://92.222.80.85:8080/sfp/login.html"
+                }
+            }
+            checkAuthRequest.open('GET', "http://92.222.80.85:8080/sfp/getsong?"+
+                "checkuser=true&name="+lastLogedUserName+"&pass="+lastLogedUserPass)
+            checkAuthRequest.send()
+            // get devices info
+            getDevicesInfoRequest = new XMLHttpRequest()
+            getDevicesInfoRequest.onreadystatechange = function(){
+                if(this.status == 500){
+                    devicesNote = document.getElementById("devices-note")
+                    devicesNote.appendChild(document.createTextNode("Server Error! please try later"))
+                }
+                else if(this.status == 200){
+                    response = this.XMLResponse
+                    devices = response.split(" ")
+                    devicesLen = devices.length
+                    devicesCBs = document.getElementById("devices-checkboxes")
+                    if(devices[0] == 0){
+                        devicesNote = document.getElementById("devices-note")
+                        devicesNote.innerHtml += 'You have no registered devices! for how it works click <a href = "./guide.html>here</a>'
+                        return
+                    }
+                    for(i = 1; i < devicesLen; i++){
+                        deviceInfo = devices[i]
+                        i++
+                        deviceId = devices[i]
+                        devicesCBs.innerHtml += '<input type="checkbox" value = "true" id = \"'+deviceId+'\">'+deviceInfo+'<br>'
+                    }
+                    document.getElementById("panel").style.display = "block"
+                }
+            }
+            getDevicesInfoRequest.open('GET', "http://92.222.80.85:8080/sfp/getsong?devicesInfo=true")
+            getDevicesInfoRequest.send()
+
+        }
+        function getCookie(cname){
+            cookies = document.cookie.split(';')
+            console.log("cookies length  "+ cookies.length)
+            for(i = 0; i < cookies.length; i++){
+                console.log("cookies"+i+" : "+cookies[i]);
+                keyValuePair = cookies[i].split('=')
+                if(keyValuePair[0].trim() == cname){
+                    return keyValuePair[1].trim()
+                }
+            }
+            return -1 
+        }        
+        function deactivateDevices(){
+            unchecked = ''
+            for(i = 2; i < devices.length; i++){
+                currentDeviceId = devices[i]
+                checked = document.getElementById(currentDeviceId).checked
+                if(!checked) {
+                    unchecked += currentDeviceId + ' '
+                }
+                i++
+            }
+            deactivateRequest = new XMLHttpRequest()
+            deactivateRequest.onreadystatechange = function(){
+                if(this.status == 500){
+                    devicesNote = document.getElementById("devices-note")
+                    devicesNote.innerHtml = "Server Error! failed to deactivate your devices, please try later"
+                }
+                if(this.status == 200){
+                    devicesNote = document.getElementById("devices-note")
+                    devicesNote.innerHtml = "Done!"
+                    document.getElementById("panel").style.display = "none"
+                }
+            }
+            deactivateRequest.open('POST', 'http://92.222.80.85:8080/sfp/getsong?deactivate=true')
+            deactivateRequest.send(unchecked)
+        }
+        init()
+        getUrlCookie()
+        document.getElementById("logout").addEventListener('click', logoutMode)
+        document.getElementById("Done").addEventListener('click', downloadToMobiles)
+        document.getElementById("local").addEventListener('checked', downloadLocally)
+    </script>
+</body>
