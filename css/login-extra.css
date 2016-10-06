@@ -1,0 +1,55 @@
+form{
+	border: 1px solid #c6c7cc;
+  	border-radius: 5px;
+	font: 14px/1.4 "Helvetica Neue", Helvetica, Arial, sans-serif;
+  	overflow: hidden;
+  	width: 240px;
+	margin: auto;
+	margin-top: 150;
+}
+fieldset{
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+input{
+	border: 1px solid #c6c7cc;
+	border-radius: 5px;
+	margin: 0;
+}
+.info{
+	padding: 20px 20px 0 20px;
+}
+.info label{
+	color: #395870;
+	display: block;
+	font-weight: bold;
+	margin-bottom: 20px;
+}
+.info input{
+	width: 100%;
+}
+.action{
+	background: #f0f0f2;
+	padding: 20px 20px 20px 20px;
+}
+.action label{
+	margin-left: 20px;
+}
+.btn{
+	border-radius: 5px;
+	color: #395870;
+}
+#errorbox{
+	width: 400px;
+	background: #ff5858;
+	border-radius: 5px;
+	border: 1px solid #c6c7cc;
+	margin:auto;
+	margin-top:20px;
+	display: none;
+}
+#errorbox p{
+	color: #ffffff;
+	margin-left: 20px;
+}

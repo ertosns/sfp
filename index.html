@@ -1,32 +1,34 @@
 <!html>
 <head>
-    <link rel="stylesheet" type"text/css" href="./css/entrycss.css"/>
+    <link rel="stylesheet" type"text/css" href="./css/template.css"/>
+    <link rel="stylesheet" type"text/css" href="./css/index-extra.css"/>    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <meta name="viewport" content = "device-width, initial-scale=1">
 </head>
 <body>
     <header>
         <img id = "logo" src="./img/logo" ></img>
-        <div style = "overflow: auto;">
+        <div style = "float: right;display: flex;">
             <div class="header-tag" id = "devices">
-                <a href="./devices" class = "link"><p>devices<p></a>
+                <a href="./devices.html" class = "link"><p>Devices<p></a>
             </div>
             <div class="header-tag" id = "login">
-                <a href="./login.html" class = "link"><p>log in</p></a>
+                <a href="./login.html" class = "link"><p>Log In</p></a>
             </div>
             <div class="header-tag" id = "logout">
-                <a href="./login.html" class = "link"><p>log out</p></a>
+                <a href="./login.html" class = "link"><p>Log Out</p></a>
             </div>
             <div class="header-tag" id = "signup">
-                <a href="./signup.html" class = "link"><p>sign up</p></a>
+                <a href="./signup.html" class = "link"><p>Sign Up</p></a>
             </div>
             <div class="header-tag" id = "help">
-                <a href="./help.html" class = "link"><p>help</p></a>
+                <a href="./guide.html" class = "link"><p>Guide</p></a>
             </div>
 	    </div>
     </header>
     <main>
-        <div id = "url-form" style = "width: 60%; margin:auto; margin-top: 150px;">
-            <input type = "text" value= "URL" id = "urlbar" style = "width: 60%; height: 35px; margin-left: auto; margin-right: auto; padding: 0px">
+        <div id = "url-form" style = "width: 80%; margin:auto; padding-top: 25%;">
+            <input type = "text" value= "URL" id = "urlbar">
             <input type = "submit" value = "get Song" id = "getsong" style = "height: 35px;">
         </div>
         <div id = "error-box">
@@ -34,8 +36,8 @@
         </div>
 	</main>
     <footer>
-        <div style = "float:left; width:60%;">
-            <p>that is how it works!</p>
+        <div style = "float: left; width:50%;">
+            <p>download any youtube or vimeo (high quality audio song) to your mobiles or local device using any other computer or mobile, sign up free account, download mobile app on your target mobiles, copy song url, and enjoy art!</p>
         </div>
         <div style = "float:right;">
             <p>contact info</p>

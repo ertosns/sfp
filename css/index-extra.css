@@ -1,0 +1,32 @@
+form, input {
+  border-radius: 10px;
+  border-color: #ff7d12;
+}
+input[type=text]{
+	background-color: #ffffba;
+	font-size: 12pt;
+}
+input[type=submit]{
+    background-color: #ec6b01;
+    color: #ffffff;
+}
+#urlbar{
+	width: 80%;
+	height: 35px; 
+	margin-left: auto; 
+	margin-right: auto; 
+	padding: 0px;
+}
+@media screen and (max-width: 600px) {
+	#url-form {
+		width: 100%;
+		display: flex;
+		flex-wrap: nowrap;
+	}
+	#urlbar {
+		width:90%;
+	}
+	input[type=submit] {
+		margin-left: 10px;
+	}
+}
