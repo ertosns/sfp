@@ -11,6 +11,7 @@ fieldset{
 	border: 0;
 	margin: 0;
 	padding: 0;
+	background-color: #ffffff;
 }
 input{
 	border: 1px solid #c6c7cc;
