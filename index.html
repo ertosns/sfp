@@ -72,16 +72,19 @@
             // check if video available by checking response size
             // check if it list or song if list find a way for getting the song
             if(!(v.startsWith("https://www.youtube.com/watch?v=")||
-                v.startsWith("http://www.youtube.com/watch?v=")||
-                v.startsWith("www.youtube.com/watch?v=")||
-                v.startsWith("youtube.com/watch?v="))) {
+                v.startsWith("https://youtube.com/watch?v=")||
+                v.startsWith("https://m.youtube.com/watch?v="))) {
 		        alert("bad URL")
             }
             else{
                 name = getCookie('name'+lastLogedUserIndex)
                 pass = getCookie('pass'+lastLogedUserIndex)
+                songId = v.split("?v=")[1]
+                if(songId.includes("&")){
+                    songId = songId.split("&")[0]
+                }
                 window.location.href = "http://92.222.80.85:8080/sfp/getsong?"+
-                "forcedownload=true&mobilesdownload=true&name="+name+"&pass="+pass+"&url="+v.split("?v=")[1]
+                "forcedownload=true&mobilesdownload=true&name="+name+"&pass="+pass+"&url="+songId
             }
         }
         function getCookie(cname){
