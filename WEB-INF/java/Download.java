@@ -1,3 +1,4 @@
+import java.sql.SQLException;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.util.*;
@@ -10,33 +11,37 @@ import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
 public class Download extends HttpServlet{
-    boolean browser = true;
-    int PORT = 1234;
-    HashMap<String, String> IPDesHash = null;
-    Database database = null;
-    String ENCODING = "UTF-8";
-    final Logger LGR = Logger.getLogger(this.toString());
-    ConsoleHandler ch = new ConsoleHandler();
-    public Download(){
-    ch.setLevel(Level.INFO);
+    private final String SONGS_PATH = Download.class.getProtectionDomain().getCodeSource().getLocation().getPath()
+        +"/../../../songs/";   
+    private final String ENCODING = "UTF-8";
+    private final int SIX_MONTH_SEC = 15552000;
+    private final Logger LGR = Logger.getLogger(this.toString());
+    private ConsoleHandler ch = new ConsoleHandler();
+    private boolean browser = true;
+    private int PORT = 1234;
+    private Database database = null;
+    public Download() {
+        ch.setLevel(Level.INFO);
         LGR.setUseParentHandlers(false);
         LGR.addHandler(ch);
         LGR.setLevel(Level.INFO);
     }
-    public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair){
+    // inspect cookies (names and values) for one or two cookies or both for (i.e name, pass)
+    // if found name return it's value and ture else return false
+    public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair) {
         boolean cName = false;
         boolean cPass = false;
         int authIndex = 0;
         String currentName = name;
         Cookie tmpCookie = null;
         Object[] obj = new Object[2];
-        for(int i = 0; i < cookies.length; i++){
-            if((tmpCookie = cookies[i]).getValue().equals(currentName) || tmpCookie.getName().equals(currentName)){
-                if(cName){
+        for (int i = 0; i < cookies.length; i++) {
+            if ((tmpCookie = cookies[i]).getValue().equals(currentName) || tmpCookie.getName().equals(currentName)) {
+                if (cName) {
                     obj[0] = new Boolean(true);
                     return obj;
                 }
-                if(pair){
+                if (pair) {
                     cName = true;
                     currentName = pass;
                     continue;
@@ -49,12 +54,13 @@ public class Download extends HttpServlet{
         obj[0] = new Boolean(false);
         return obj;
     }
-    // goGet is for login, signup, check valid user, download locally, download to phones
+    // login, signup, check or valid user, download locally, download to phones
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
       throws IOException, ServletException{       
         String name = decrypt(request.getParameter("name"));
         String pass = decrypt(request.getParameter("pass"));
+        String email = decrypt(request.getParameter("email"));
         boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
         boolean login = Boolean.parseBoolean(decrypt(request.getParameter("login")));   
         boolean checkUser = Boolean.parseBoolean(decrypt(request.getParameter("checkuser")));
@@ -66,17 +72,16 @@ public class Download extends HttpServlet{
         Cookie passCookie = null;
         Cookie lastLogedUserIndex = null;
         Cookie numOfLogedUsers = null;
-        int llui = 0;
-        int nolu = 0;
-        if(login||signup||checkUser){
-            database = new Database();
-            int id = database.getAuthID(name, pass);
-            // database Error
-            if(id == -1){                
+        int LLUI = 0;
+        int NOLU = 0;
+        database = new Database();
+        int id = database.getAuthID(name, pass, email);
+        if(id == -1){                
                 response.setStatus(500);
                 return;
-            }
-            // validate user while login.
+        }
+        if(login||signup||checkUser){
+            // validate user.
             if(checkUser == true){
                 if(id > 0){
                     response.setStatus(200);
@@ -85,45 +90,44 @@ public class Download extends HttpServlet{
                 }
                 return;
             }
-            Cookie[] cookies = request.getCookies();
             {// prepare cookies
-                if(cookies != null && cookies.length > 0){
-                  llui = Integer.parseInt((String)(cookiesHas(cookies,encrypt("lastlogeduserindex"), null, false)[1]));
-                 nolu = Integer.parseInt((String)(cookiesHas(cookies,encrypt("numoflogedusers"), null, false)[1]));
-             if(signup){
-                nolu++;
-                llui = nolu-1;
-               }else if(login){
-                 String nameKey  = (String)(cookiesHas(cookies, encrypt(name), null, false)[1]);
-                llui = Integer.parseInt(""+nameKey.charAt(nameKey.length()-1));
-             }
-                } else{
-                    llui = 0;
-                    nolu = 1;
+                Cookie[] cookies = request.getCookies();
+                if (cookies != null && cookies.length > 0) {
+                    LLUI = Integer.parseInt((String)(cookiesHas(cookies,encrypt("lastlogeduserindex"), null, false)[1]));
+                    NOLU = Integer.parseInt((String)(cookiesHas(cookies,encrypt("numoflogedusers"), null, false)[1]));
+                    if (signup) {
+                        NOLU++;
+                        LLUI = NOLU-1;
+                    } 
+                    else if(login) {
+                        String nameKey = (String)(cookiesHas(cookies, encrypt(name), null, false)[1]);
+                        LLUI = Integer.parseInt(""+nameKey.charAt(nameKey.length()-1));
+                    }
+                } else {
+                    LLUI = 0;
+                    NOLU = 1;
                 }
-                lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt(new String(llui+"")));
-                lastLogedUserIndex.setMaxAge(7776000);
-                numOfLogedUsers = new Cookie(encrypt("numoflogedusers"), encrypt(new String(nolu+"")));
-                numOfLogedUsers.setMaxAge(7776000);
-                if(cookies == null || !(boolean)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0])){
-                    nameCookie = new Cookie(encrypt("name"+llui), encrypt(name));
-                    nameCookie.setMaxAge(7776000);
-                    passCookie = new Cookie(encrypt("pass"+llui), encrypt(pass));
-                    passCookie.setMaxAge(7776000);
+                lastLogedUserIndex = new Cookie(encrypt("lastlogeduserindex"), encrypt(new String(LLUI+"")));
+                lastLogedUserIndex.setMaxAge(SIX_MONTH_SEC);
+                numOfLogedUsers = new Cookie(encrypt("numoflogedusers"), encrypt(new String(NOLU+"")));
+                numOfLogedUsers.setMaxAge(SIX_MONTH_SEC);
+                if (cookies == null || !(boolean)(cookiesHas(cookies, encrypt(name), encrypt(pass), true)[0])) {
+                    nameCookie = new Cookie(encrypt("name"+LLUI), encrypt(name));
+                    nameCookie.setMaxAge(SIX_MONTH_SEC);
+                    passCookie = new Cookie(encrypt("pass"+LLUI), encrypt(pass));
+                    passCookie.setMaxAge(SIX_MONTH_SEC);
                 }
             }
             // serve cookies :)
-            if(signup || (login && id > 0)){
+            if (signup || (login && id > 0)) {
                 if(signup){ // signup from browser.
                     if(id>0){
                         response.setStatus(401); // user already has an account!
                         return;
                     }
-                    int success =  database.signUp(name, pass);                
-                    LGR.info("signup account done with with "+((success==-1)?"failure":"success"));
+                    int success =  database.signUp(name, pass, email);                
                     if(success == -1){
                         response.setStatus(500); //Server Error, Database error
-                        LGR.info("singup failed and 500 status code send to client");
                         return;
                     }
                     response.addCookie(nameCookie);
@@ -131,45 +135,46 @@ public class Download extends HttpServlet{
                 }
                 response.addCookie(lastLogedUserIndex);
                 response.addCookie(numOfLogedUsers);
-            }   
-            else{
+            } else{
                 response.setStatus(401); //client Error, bad Authentication
-                response.setHeader("WWWW-Authentication", "basic realm=UserNameIsRealm");
             }
             return;
         }
         else if (forceDownload) { // if target is browser force download
             try {
                 forceBrowserFileDownload(url, response);
+                if(id == 0) database.addAnonymousDownload();
+                else database.incrementUserLocalOrDeletedDownloadsNum(id);
             } catch (Exception e) { 
                 // should inform user
                e.printStackTrace();
+               response.setStatus(500); //TODO implement this
+               return;
             }
+            clean();
         }
         else if (devicesInfo) {
-            // return json object of devices names appended with model and unique id (id for response)
-        } 
-        else if (mobilesDownload) { // if target is mobile send via TCP
-            database = new Database();
-            int id = database.getAuthID(name, pass); // make that secure. 
-            if(id == -1) {
-                response.setStatus(401);
-                return;
-            }
-            else if (id == 0) {
+            String info = database.getDevicesInfo(id);
+            response.getOutputStream().write(info.getBytes());
+            return;
+        }
+        /*else if (mobilesDownload) { // if target is mobile send via TCP
+            if (id == 0) {
                 response.getOutputStream().write("authentication failed".getBytes("UTF-8"));
                 return;
             }
             try {
-                IPDesHash = database.getUserActiveIPs(id);
+                IPDesArray = database.getUserActiveIPs(id);
             } catch (Exception e) {
                 // user isn't registered with his mobil ip. 
                 // window or new page should open and inform user to install the app with app link and how it work.
                 // response should be done here, and close connection
                 return;
             }
+            //increament num of downloads
             ArrayList<Integer> idleIPsIds = new ArrayList<Integer>();
-            int ipSize = IPDesHash.size();
+            ArrayList<String> ipsArray = new ArrayList<String>();
+            int ipSize = ipsArray.size();
             StringBuilder inactiveIPsDes = new StringBuilder("the following devices aren't accessible ");
             ArrayList<String> activeIPs = new ArrayList<String>();
             for(Map.Entry<String, String> e : IPDesHash.entrySet()){
@@ -198,7 +203,8 @@ public class Download extends HttpServlet{
                 response.getOutputStream().write("song will be on your active devices soon".toString().getBytes(ENCODING));
             }
             TCPToMobile(ip, url);
-        }
+            clean();
+        }*/
     }
     @Override 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -206,78 +212,59 @@ public class Download extends HttpServlet{
         database = new Database();
         String name = decrypt(request.getParameter("uname"));
         String pass = decrypt(request.getParameter("upass"));
+        String email = decrypt(request.getParameter("email"));
         String ip = decrypt(request.getParameter("ip"));
         String des = decrypt(request.getParameter("des"));
         boolean signup = Boolean.parseBoolean(decrypt(request.getParameter("signup")));
-        int id = database.getAuthID(name, pass);
-        if(id == -1){
+        boolean activity = Boolean.parseBoolean(decrypt(request.getParameter("activity")));
+        int id = database.getAuthID(name, pass, email);
+        if(id == -1) {
+            response.setStatus(500);
+            return;
+        } else if(!signup && id == 0) {
             response.setStatus(401);
+            return;
         }
-        if(signup){//sign up from mobile 
-            if(id>0){
-            response.getOutputStream().write("you already has an account".getBytes(ENCODING));
+        if(signup) {//sign up from mobile 
+            int success = database.signUP(name, pass, email, ip, des);
+            if(success == Database.SERVER_ERROR) {
+               response.setStatus(500);
                return;
-           }
-           int success = database.signUP(name, pass, ip, des);
-            if(success == -1){
-               response.setStatus(401);
             }
-            return;
+            
         }
-        if(id == 0){
-            response.getOutputStream().write("authentication failed, wrong username or password".getBytes(ENCODING));
-            return;
-        }
-        int ipsnum = database.getIPsNum(id);
-        if(ipsnum >= 5){
-            response.setStatus(200);
-        } 
-        else{
-            database.insertIP(id, ip, des);
-            response.setStatus(200);
+        else if(activity) {
+            int car = 0;
+            int messageLen = 0;
+            String activityMessage;
+            BufferedReader br = null;
+            byte[] messageBytes = new byte[0];
+            ArrayList<Byte> messageBytesList = null;
+            try {
+                br = request.getReader();
+                messageBytesList = new ArrayList<Byte>();
+                while ((car = br.read()) != -1) messageBytesList.add(new Byte((byte)car));
+                messageLen = messageBytesList.size();
+                messageBytes = new byte[messageLen];
+                for (int i = 0; i < messageLen; i++) 
+                    messageBytes[i] = messageBytesList.get(i).byteValue();
+                activityMessage = new String(messageBytes);
+                database.updateIpsActivity(id, activityMessage.split(" "));
+            } catch(SQLException e) {
+                e.printStackTrace();                
+                response.setStatus(500);
+                return;
+            }
         }
     }
     public String encrypt(String message){
         //TODO implement encrypting algorithm
         return message;
     }
-    public void forceBrowserFileDownload(URL url, HttpServletResponse response){
-          try{
-            Object[] fileInfo = downloadSong(url);
-            File f = (File) fileInfo[0];
-            String fileName = (String) fileInfo[1];
-            response.setContentType("application/force-download");
-            response.setContentLength((int)f.length());
-            response.setHeader("Content-Disposition","attachment; filename=\"" +fileName);
-            InputStream is = new FileInputStream(f);
-            byte[] bytes = new byte[(int)f.length()];
-            is.read(bytes);
-            response.getOutputStream().write(bytes);
-        }catch(Exception e) { e.printStackTrace();  }
-    }
-    public String decrypt(String s){
-        return s;
-    }
-    public void TCPToMobile(String[] ip,URL url){
-     // there is bug in my idea i need to download file to mobile even if it closed.
-     // is specific ip didn't recieve 
-        for(int i = 0; i < ip.length; i++){
-            try{
-                OutputStream sos = new Socket(ip[i], PORT).getOutputStream();
-                File f = (File) downloadSong(url)[1];
-                int length = (int) f.length();
-                byte[] bytes = new byte[length];
-                FileInputStream fis = new FileInputStream(f);
-                fis.read(bytes);
-                sos.write(bytes);
-            }catch(Exception e) { e.printStackTrace();  }
-        }
-    }
     public Object[] downloadSong(URL url){
         VGet v = null;
         String name = "";
         Object[] objs = null;
-        String SONGS_PATH = Download.class.getProtectionDomain().getCodeSource().getLocation().getPath()+"/../../../songs/";
         byte[] bytes;
         try{
             File f = new File(SONGS_PATH);
@@ -293,7 +280,50 @@ public class Download extends HttpServlet{
             byte[] pathBytes = path.getBytes();
             objs[0] = new File(new String(pathBytes, "UTF-8"));
             objs[1] = name;
-        }catch(Exception e){ e.printStackTrace(); }
+        } catch(Exception e) { 
+            e.printStackTrace(); 
+        }
         return objs; 
     }
+    public void forceBrowserFileDownload(URL url, HttpServletResponse response) {
+        try {
+            Object[] fileInfo = downloadSong(url);
+            File f = (File) fileInfo[0];
+            String fileName = (String) fileInfo[1];
+            response.setContentType("application/force-download");
+            response.setContentLength((int)f.length());
+            response.setHeader("Content-Disposition","attachment; filename=\"" +fileName);
+            InputStream is = new FileInputStream(f);
+            byte[] bytes = new byte[(int)f.length()];
+            is.read(bytes);
+            response.getOutputStream().write(bytes);
+        } catch(Exception e) {
+            e.printStackTrace();  
+        }
+    }
+    public void TCPToMobile(String[] ip,URL url) {
+     // there is bug in my idea i need to download file to mobile even if it closed.
+     // is specific ip didn't recieve 
+        for (int i = 0; i < ip.length; i++) {
+            try {
+                OutputStream sos = new Socket(ip[i], PORT).getOutputStream();
+                File f = (File) downloadSong(url)[1];
+                int length = (int) f.length();
+                byte[] bytes = new byte[length];
+                FileInputStream fis = new FileInputStream(f);
+                fis.read(bytes);
+                sos.write(bytes);
+            } catch(Exception e) { 
+                e.printStackTrace();  
+            }
+        }
+    }
+    public String decrypt(String s){
+        return s;
+    }
+    public void clean(){
+        String[] files = new File(SONGS_PATH).list();
+        for (int i = 0; i < files.length; i++) new File(files[i]).delete();
+    }
+
 }
