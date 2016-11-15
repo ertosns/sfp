@@ -1,0 +1,6 @@
+./WEB-INF/lib
+./WEB-INF/songs
+./WEB-INF/build
+./WEB-INF/classes
+./WEB-INF/dependencies
+**/*.save

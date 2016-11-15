@@ -20,6 +20,7 @@ public class Download extends HttpServlet{
     private boolean browser = true;
     private int PORT = 1234;
     private Database database = null;
+
     public Download() {
         ch.setLevel(Level.INFO);
         LGR.setUseParentHandlers(false);
