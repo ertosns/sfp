@@ -2,49 +2,14 @@ apply plugin: 'java'
 
 sourceSets{
 	main{
-		//output.classesDir   = '.'
-		output.classesDir   = './classes'
+		
+		output.classesDir  './classes'
 		java{
-
 			srcDir 'java'
-			// how make gradle compile to ./classes instead of compiling in the same directory
 		}
 	}
 }
+
 dependencies {
-	FileTree t = fileTree('./lib').include('*')
-	def resources = []
-	//resources.add('../../../../lib/servlet-api.jar')
-	t.visit {elm-> resources.add(elm.path)}
-	compile fileTree(dir:'./lib', include:resources)
-	//compile t
+	compile fileTree('./lib').include('*')
 }
-task rt << {}
-    import java.io.File;
-    import java.io.FileInputStream;
-    import java.io.FileOutputStream;
-    public class RT{
-    	String[] dotJavaPaths = new String[2];
-        {
-            dotJavaPaths[0] = "./java/Database.java";
-            dotJavaPaths[1] = "./java/Download.java";
-    	}
-        public RT(){
-            for(int i = 0; i < dotJavaPaths.length; i++){
-            	try{
-            	    File f = new File(dotJavaPaths[i]);
-                    int len = f.length();
-                    byte[] fileBytes = new byte[len];
-                	FileInputStream fis = new FileInputStream(f);
-                	fis.read(fileBytes);
-                	fis.close();
-                	FileOutputStream fos = new FileOutputStream(f);
-                    fos.write(new String(fileBytes).replace("\t", "    ").getBytes());
-                	fos.close();
-                } catch(Exception e){
-                	e.printStackTrace();
-                }
-            }
-    	}
-    }
-new RT();

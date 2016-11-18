@@ -2,6 +2,7 @@
 <head>
     <link rel="stylesheet" type"text/css" href="./css/template.css"/>
     <link rel="stylesheet" type"text/css" href="./css/signup-extra.css"/>
+    <script src="hostName.js" type = "text/javascript"/>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
     <meta name="viewpoint" content="width-width, initial-scale=1">
 </head>
@@ -21,6 +22,9 @@
     <main>
         <form>
             <fieldset class = "info">
+                <label>email
+                    <input id = "email" type = "text">
+                </label>
                 <label>username
 		            <input id = "username" type = "text">
                 </label>
@@ -51,10 +55,17 @@
     <script type = "text/javascript">
         document.getElementById("signupbtn").addEventListener('click', signup, false)
         function signup(){
+            var email = document.getElementById("email").value
             var name = document.getElementById("username").value
             var pass = document.getElementById("password").value
-            checkValidity(name)
-            checkValidity(pass)
+            var host = getHostName();
+            var YOU_ALREADY_AN_USER = 'you already an user'
+            var SERVER_DOWN = 'Ops! Server Error. please try later!'
+
+            validatePass(name) 
+            validateName(pass)
+            validateEmail(email)
+
             //var remember = document.getElementById("remember").checked
             var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
@@ -63,9 +74,9 @@
                     var loginpar = document.getElementById("loginError")
                     //TODO optimize to be more specific should check username or password or both.
                     if(!loginpar.childNodes[0]){
-                        loginpar.appendChild(document.createTextNode("you already an user"))
+                        loginpar.appendChild(document.createTextNode(YOU_ALREADY_AN_USER))
                     } else{
-                        loginpar.replaceChild(document.createTextNode("you already an user"), loginpar.childNodes[0])
+                        loginpar.replaceChild(document.createTextNode(YOU_ALREADY_AN_USER), loginpar.childNodes[0])
                     }
                 }
                 else if(this.status == 500){
@@ -73,22 +84,30 @@
                     var loginpar = document.getElementById("loginError")
                     //TODO optimize to be more specific should check username or password or both.
                     if(!loginpar.childNodes[0]){
-                        loginpar.appendChild(document.createTextNode("Ops! Server Error. please try later!"))
+                        loginpar.appendChild(document.createTextNode(SERVER_DOWN))
                     }
                     else{
-                        loginpar.replaceChild(document.createTextNode("Ops! Server Error, please try later!"), loginpar.childNodes[0])
+                        loginpar.replaceChild(document.createTextNode(SERVER_DOWN), loginpar.childNodes[0])
                     }
                 }
                 else if (this.status == 200){
-                    window.location.href = "http://92.222.80.85:8080/sfp/"
+                    window.location.href = host+"/sfp"
                 }
             } 
-	        request.open("GET", "http://92.222.80.85:8080/sfp/getsong?name="+name+"&pass="+pass+
-    				"&signup=true")
+            //TODO none us-assci shoudl be handled too
+	        request.open("GET", host+"/sfp/getsong?name="+name+"&pass="+pass+"&email="+email+"&signup=true")
             request.send()
         }
-        function checkValidity(message){
+
+        function validateName(message){
             return message
         }
+        function validatePass(message){
+            return message
+        }
+        function validateEmail(message){
+            return message
+        }
+
   </script>
 </body>
