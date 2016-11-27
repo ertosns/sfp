@@ -1,15 +1,24 @@
 import java.io.*;
 import java.util.*;
 import java.net.*;
+import java.util.logging.*;
 
 public class Listener implements Consts{
 
     //TODO register devices to support multiple devices.
     boolean LISTEN = true;
     Database database = null;
+    Logger l =  Logger.getLogger(this.toString());
+    Handler handler = new ConsoleHandler();
     public void listen() {
+        l.setUseParentHandlers(false);
+        l.setLevel(Level.INFO);
+        handler.setLevel(Level.INFO);
+        l.addHandler(handler);
+
         database = new Database();
     	while(LISTEN) {
+            l.info("listening for requests");
     		try (ServerSocket ss = new ServerSocket()) {
     			ss.setReuseAddress(true);
     			ss.bind(new InetSocketAddress(PORT), MAX_BACK_LOG);
@@ -26,6 +35,7 @@ public class Listener implements Consts{
                 String url;
                 if((url = database.getSongUrlId(id)) != null) {
                 	//TODO res send bytes while reading vs sending buffer.
+                    l.info("client found");
                 	os.write(HAS_SONG_FLAG);
                 	sendSong(url, os);
                 }
@@ -39,6 +49,7 @@ public class Listener implements Consts{
 
     public void stop() {
         LISTEN = false;
+        l.info("listener stoped");
     }
 
 	private void sendSong(String url, OutputStream os) {
@@ -59,6 +70,7 @@ public class Listener implements Consts{
         } catch(Exception e) { 
                 e.printStackTrace();  
         }
+        l.info("listener, song is sent");
     }
 
     private byte[] intToBytes(int size) {

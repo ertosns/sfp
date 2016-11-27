@@ -1,5 +1,9 @@
 import java.sql.*;
 import java.util.*;
+import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 
 /* application protocol
  * SERVER_ERROR  :if method return -1 it's database error
@@ -8,15 +12,23 @@ import java.util.*;
 // TODO check client errors, 
 // TODO check all TODO lines embeded between code lines.
 // TODO depending on how i keep track of user mobile ip you need to update device ip.
+// TODO (fix) log doesn't work!!
 
-public class Database implements Consts{
+public class Database implements Consts {
     Connection con = null;
     Statement stm = null;
-    
+    Logger l = Logger.getLogger(this.toString());
+    Handler handler = null;
+
     public Database() {
+        handler = new ConsoleHandler();
+        handler.setLevel(Level.INFO);
+        l.setUseParentHandlers(false);
+        l.addHandler(handler);
+        l.setLevel(Level.INFO);
+        
         try {
-            System.out.println("database called");
-	        Class.forName(DRIVER);
+            Class.forName(DRIVER);
             con = DriverManager.getConnection(DATABASE_URL, NAME, PASS);
             stm = con.createStatement();
             stm.execute("create database if not exists sfp;");
@@ -34,20 +46,20 @@ public class Database implements Consts{
             String anonymousDownloads = "CREATE TABLE ANONYMOUS_DOWNLOADS ( "
                 + "ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "DOWNLOAD_DATE DATE NOT NULL);";
-	        String songs = "CREATE TABLE SONGS (ID INT PRIMARY KEY AUTO_INCREMENT, "
+            String songs = "CREATE TABLE SONGS (ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "USER_ID INT NOT NULL, " //TODO does quering hashed id instead of id(int) response faster considering decoding overhead.
-		        + "URL VARCHAR(50) NOT NULL, "
-		        + "DATE DATE NOT NULL);";
-	    
+                + "URL VARCHAR(50) NOT NULL, "
+                + "DATE DATE NOT NULL);";
+        
             if (!userInfoTableRS.next()) {
                 stm.execute(anonymousDownloads);
-		        stm.execute(songs);
-	            stm.execute(userInfoTable);
-                System.out.println("tables are created");
+                stm.execute(songs);
+                stm.execute(userInfoTable);
+                l.info("Database, all tables are created");
             }
 
             assert meta.getColumns(null, null, "USER_INFO", null).next();
-	    
+        
         } catch(Exception e) { 
             e.printStackTrace();  
         }
@@ -55,8 +67,9 @@ public class Database implements Consts{
     
     public int signUp(String name, String pass, String email) { 
         try {
-            stm.execute("insert into USER_INFO (NAME, PASS, EMAIL) values ('"
-                +name+"', '"+pass+"', '"+email+"');");
+            stm.execute("insert into USER_INFO (NAME, PASS, EMAIL, DOWNLOADS) values ('"
+                +name+"', '"+pass+"', '"+email+"', 0);");
+            l.info("signUp, signed up");
             return getAuthID(pass, email);
         } catch(SQLException e) {
             e.printStackTrace();
@@ -70,6 +83,7 @@ public class Database implements Consts{
                 + id + ", "
                 + urlId + ", "
                 + new java.sql.Date(new java.util.Date().getTime())+");");
+            l.info("insertSong, song url inserted with id = "+id);
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
@@ -78,6 +92,7 @@ public class Database implements Consts{
     public void removeSong(int id) {
         try {
             stm.execute("DELETE FROM SONGS WHERE ID = "+id+";");
+            l.info("removeSong, song removed with id = "+id);
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
@@ -116,20 +131,13 @@ public class Database implements Consts{
 
     //anonymous downloads
 
-    public void incrementDeviceDownloadsNum(int uniqueId) throws SQLException{
-        int downloads = 0;
-        ResultSet rs = stm.executeQuery("SELECT DOWNLOADS FROM USER_DEVICES WHERE UNIQUEID = "+uniqueId+";");
-        if (rs.next()) downloads = rs.getInt(1);
-        else throw new SQLException();
-        stm.execute("UPDATE USER_DEVICES SET DOWNLOADS = "+(++downloads)+" WHERE UNIQUEID = "+uniqueId+";");
-    }
     
-    public void incrementUserLocalOrDeletedDownloadsNum(int id) throws SQLException {
+    public void incrementUserLocalDownloadsNum(int id) throws SQLException {
         int downloads = 0;
         ResultSet rs = stm.executeQuery("SELECT DOWNLOADS FROM USER_INFO WHERE ID = "+id+";");
         if (rs.next()) downloads = rs.getInt(1);
         else throw new SQLException();
-        stm.execute("UPDATE USER_INO SET DOWNLOADS = "+(++downloads)+" WHERE ID = "+id+";");
+        stm.execute("UPDATE USER_INFO SET DOWNLOADS = "+(++downloads)+" WHERE ID = "+id+";");
     }
     
     public void addAnonymousDownload() throws SQLException {

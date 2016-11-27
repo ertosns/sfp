@@ -13,19 +13,24 @@ import java.util.logging.Level;
 //TODO log
 public final class Download extends HttpServlet implements Consts{
     
-    private final Logger LGR = Logger.getLogger(this.toString());
-    private ConsoleHandler ch = new ConsoleHandler();
+    
     private boolean browser = true;
     private Database database = null;
     Listener listener;
+    private final Logger l = Logger.getLogger(this.toString());
+    Handler handler = null;
 
-    private Download() {
-        ch.setLevel(Level.INFO);
-        LGR.setUseParentHandlers(false);
-        LGR.addHandler(ch);
-        LGR.setLevel(Level.INFO);
+    public Download() {
+
+        handler = new ConsoleHandler();
+        handler.setLevel(Level.INFO);
+        l.setUseParentHandlers(false);
+        l.addHandler(handler);
+        l.setLevel(Level.INFO);
+
         listener = new Listener();
         listener.listen();
+
     }
     // inspect cookies (names and values) for one or two cookies or both for (i.e name, pass)
     // if found name return it's value and ture else return false
@@ -58,85 +63,106 @@ public final class Download extends HttpServlet implements Consts{
     // login, signup, check or valid user, download locally, download to phones
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-      throws IOException, ServletException{       
-        String name = Utils.base64ToString(request.getParameter("name"));
-        String pass = Utils.base64ToString(request.getParameter("pass"));
-        String email = Utils.base64ToString(request.getParameter("email"));
-        boolean signup = Boolean.parseBoolean(Utils.base64ToString(request.getParameter("signup")));
-        boolean login = Boolean.parseBoolean(Utils.base64ToString(request.getParameter("login")));   
-        boolean checkUser = Boolean.parseBoolean(Utils.base64ToString(request.getParameter("checkuser")));
-        boolean forceDownload = Boolean.parseBoolean(Utils.base64ToString(request.getParameter("forcedownload")));
-        boolean mobilesDownload = Boolean.parseBoolean(Utils.base64ToString(request.getParameter("mobilesdownload")));
-        String urlId = Utils.base64ToString(request.getParameter("url"));
+      throws IOException, ServletException {       
+    try {
+        boolean signup = Boolean.parseBoolean(request.getParameter("signup"));
+        boolean login = Boolean.parseBoolean(request.getParameter("login"));   
+        boolean checkUser = Boolean.parseBoolean(request.getParameter("checkuser"));
+        boolean forceDownload = Boolean.parseBoolean(request.getParameter("forcedownload"));
+        boolean mobilesDownload = Boolean.parseBoolean(request.getParameter("mobilesdownload"));
+        
+        String urlId = request.getParameter("url");
         boolean valid = validateUrlId(urlId);
-        Cookie nameCookie = null;
+
+        Cookie emailCookie = null;
         Cookie passCookie = null;
         Cookie lastLogedUserIndex = null;
         Cookie numOfLogedUsers = null;
         int LLUI = 0;
         int NOLU = 0;
+        int id = -1;
         database = new Database();
-        int id = database.getAuthID(pass, email);
-        System.out.println("download class access console");
-        if(id == -1){                
+        
+        
+        if(login||signup||checkUser){
 
+            String pass = Utils.base64ToString(request.getParameter("pass"));
+            String email = Utils.base64ToString(request.getParameter("email"));
+            
+            id = database.getAuthID(pass, email);
+
+            if(id == -1){                
+                l.info("doGet, server error authenticating user");
                 response.setStatus(500);
                 return;
-        }
-        if(login||signup||checkUser){
+            }
+
             // validate user.
             if(checkUser == true){
                 if(id > 0){
+                    l.info("doGet, checkUser, user is found");
                     response.setStatus(200);
                     response.getOutputStream().write(generateUniqueId(pass, id));
                 } else{ // id start at 1, so no valid user
+                    l.info("goGet, checkUser, user Error");
                     response.setStatus(401);
                 }
                 return;
             }
+
             {// prepare cookies
+                l.info("doGet, perparing cookies");
                 Cookie[] cookies = request.getCookies();
                 if (cookies != null && cookies.length > 0) {
-                    LLUI = Integer.parseInt((String)(cookiesHas(cookies,Utils.toBase64Url("lastlogeduserindex"), null, false)[1]));
-                    NOLU = Integer.parseInt((String)(cookiesHas(cookies,Utils.toBase64Url("numoflogedusers"), null, false)[1]));
+                    
+                    LLUI = Integer.parseInt(Utils.base64ToString((String)cookiesHas(cookies,Utils.toBase64("lastlogeduserindex"), null, false)[1]));                    
+                    NOLU = Integer.parseInt(Utils.base64ToString((String)cookiesHas(cookies,Utils.toBase64("numoflogedusers"), null, false)[1]));
+
                     if (signup) {
                         NOLU++;
                         LLUI = NOLU-1;
-                    } 
-                    else if(login) {
-                        String nameKey = (String)(cookiesHas(cookies, Utils.toBase64Url(name), null, false)[1]);
-                        LLUI = Integer.parseInt(""+nameKey.charAt(nameKey.length()-1));
                     }
+
+                    else if(login) {
+                        String nameKey = (String)(cookiesHas(cookies, Utils.toBase64(email), null, false)[1]);
+                        LLUI = Integer.parseInt(""+ nameKey.charAt(nameKey.length()-1));
+                    }
+                
                 } else {
                     LLUI = 0;
                     NOLU = 1;
                 }
-                lastLogedUserIndex = new Cookie(Utils.toBase64Url("lastlogeduserindex"), Utils.toBase64Url(new String(LLUI+"")));
+
+                lastLogedUserIndex = new Cookie(Utils.toBase64("lastlogeduserindex"), Utils.toBase64(new String(LLUI+"")));
                 lastLogedUserIndex.setMaxAge(SIX_MONTH_SEC);
-                numOfLogedUsers = new Cookie(Utils.toBase64Url("numoflogedusers"), Utils.toBase64Url(new String(NOLU+"")));
+                numOfLogedUsers = new Cookie(Utils.toBase64("numoflogedusers"), Utils.toBase64(new String(NOLU+"")));
                 numOfLogedUsers.setMaxAge(SIX_MONTH_SEC);
-                if (cookies == null || !(boolean)(cookiesHas(cookies, Utils.toBase64Url(name), Utils.toBase64Url(pass), true)[0])) {
-                    nameCookie = new Cookie(Utils.toBase64Url("name"+LLUI), Utils.toBase64Url(name));
-                    nameCookie.setMaxAge(SIX_MONTH_SEC);
-                    passCookie = new Cookie(Utils.toBase64Url("pass"+LLUI), Utils.toBase64Url(pass));
+                if (cookies == null || !(boolean)(cookiesHas(cookies, Utils.toBase64(email), Utils.toBase64(pass), true)[0])) {
+                    emailCookie = new Cookie(Utils.toBase64("email"+LLUI), Utils.toBase64(email));
+                    emailCookie.setMaxAge(SIX_MONTH_SEC);
+                    passCookie = new Cookie(Utils.toBase64("pass"+LLUI), Utils.toBase64(pass));
                     passCookie.setMaxAge(SIX_MONTH_SEC);
                 }
             }
             // serve cookies :)
             if (signup || (login && id > 0)) {
                 if(signup){ // signup from browser.
+                    String name = Utils.base64ToString(request.getParameter("name"));
                     if(id>0){
+                        l.info("doGet, signup, user already found");
                         response.setStatus(401); // user already has an account!
                         return;
                     }
                     int signupId =  database.signUp(name, pass, email);                
                     if(signupId == SERVER_ERROR){
+                        l.info("doGet, signup, serverError signing up");
                         response.setStatus(500); //Server Error, Database error
                         return;
                     }
-                    response.addCookie(nameCookie);
-                    response.addCookie(passCookie);
+                    
                 }
+                response.addCookie(emailCookie);
+                response.addCookie(passCookie);
                 response.addCookie(lastLogedUserIndex);
                 response.addCookie(numOfLogedUsers);
                 response.getOutputStream().write(generateUniqueId(pass, id));
@@ -148,12 +174,14 @@ public final class Download extends HttpServlet implements Consts{
         else if (forceDownload) { // if target is browser force download
             try {
                 if(!valid) {
+                    l.info("doGet, forceDownload, not valid url");
                     response.setStatus(400);
                     return;
                 }
+                l.info("dogGet, start forceBrowserFileDownload");
                 forceBrowserFileDownload("https://www.youtube.com/watch?v="+urlId, response);
                 if(id == 0) database.addAnonymousDownload();
-                else database.incrementUserLocalOrDeletedDownloadsNum(id);
+                else database.incrementUserLocalDownloadsNum(id);
             } catch (Exception e) { 
                 // should inform user
                e.printStackTrace();
@@ -162,20 +190,28 @@ public final class Download extends HttpServlet implements Consts{
             }
         }
         else if (mobilesDownload) { // if target is mobile send via TCP
+            l.info("doGet, mobilesDownload");
             if (id == 0) {
+                l.info("doGet, mobilesDownload, user not found");
                 response.setStatus(400);
                 return;
             }
+            l.info("doGet, mobileDownload, inserting givin url and id");
             database.insertSong(id, urlId);
         }
+    } catch (Exception e) {
+        e.printStackTrace();
+    }
     }
 
     @Override 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException{
+        l.info("dopPost!");
     }
 
     public void destroy() {
+        l.info("destroy");
         listener.stop();
     }
 
@@ -191,6 +227,7 @@ public final class Download extends HttpServlet implements Consts{
             byte[] bytes = new byte[(int)f.length()];
             is.read(bytes);
             response.getOutputStream().write(bytes);
+            l.info("song "+fileName+" is sent");
         } catch(Exception e) {
             e.printStackTrace();  
         }
@@ -199,6 +236,7 @@ public final class Download extends HttpServlet implements Consts{
     private byte[] generateUniqueId(String pass, int id) {
         byte[] newPass = Utils.changeStringSize(pass, 10);
         //TODO pass should be bitwised, and padding shouldn't be the same characters & not even fixed pattern 
+        
         return Utils.toBase64Bytes(new StringBuilder(new String(newPass)).append(id).toString());
     }
 

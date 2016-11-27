@@ -2,10 +2,11 @@
 <head>
     <link rel="stylesheet" type"text/css" href="./css/template.css"/>
     <link rel="stylesheet" type"text/css" href="./css/signup-extra.css"/>
-    <script src="hostName.js" type = "text/javascript"/>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script src="hostName.js" type = "text/javascript"> </script>
+    <script src="base64.js" type="text/javascript"> </script> <!--https://github.com/dankogai/js-base64-->
     <meta name="viewpoint" content="width-width, initial-scale=1">
 </head>
+
 <body>
     <div class = "page">
     <header>
@@ -54,11 +55,11 @@
     </footer>
     <script type = "text/javascript">
         document.getElementById("signupbtn").addEventListener('click', signup, false)
-        function signup(){
+        function signup() {
             var email = document.getElementById("email").value
             var name = document.getElementById("username").value
             var pass = document.getElementById("password").value
-            var host = getHostName();
+            var host = getHostName()
             var YOU_ALREADY_AN_USER = 'you already an user'
             var SERVER_DOWN = 'Ops! Server Error. please try later!'
 
@@ -94,19 +95,25 @@
                     window.location.href = host+"/sfp"
                 }
             } 
-            //TODO none us-assci shoudl be handled too
-	        request.open("GET", host+"/sfp/getsong?name="+name+"&pass="+pass+"&email="+email+"&signup=true")
+
+	        request.open("GET", host+"/sfp/getsong?name="+e64(name)+"&pass="+e64(pass)+"&email="+e64(email)+"&signup=true")
             request.send()
         }
 
         function validateName(message){
             return message
         }
+
         function validatePass(message){
             return message
         }
+
         function validateEmail(message){
             return message
+        }
+        
+        function e64(message) {
+            return Base64.encode(message)
         }
 
   </script>

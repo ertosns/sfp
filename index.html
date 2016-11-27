@@ -3,6 +3,8 @@
     <link rel="stylesheet" type"text/css" href="./css/template.css"/>
     <link rel="stylesheet" type"text/css" href="./css/index-extra.css"/>    
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.5.1/jquery.min.js"></script>
+    <script src="hostName.js" type="text/javascript"></script>
+    <script src = "base64.js" type="text/javascript"></script>
     <meta name="viewport" content = "device-width, initial-scale=1">
 </head>
 <body>
@@ -10,9 +12,6 @@
     <header>
         <img id = "logo" src="./img/logo" ></img>
         <div style = "float: right;display: flex;">
-            <div class="header-tag" id = "devices">
-                <a href="./devices.html" class = "link"><p>Devices<p></a>
-            </div>
             <div class="header-tag" id = "login">
                 <a href="./login.html" class = "link"><p>Log In</p></a>
             </div>
@@ -22,15 +21,16 @@
             <div class="header-tag" id = "signup">
                 <a href="./signup.html" class = "link"><p>Sign Up</p></a>
             </div>
-            <div class="header-tag" id = "help">
-                <a href="./guide.html" class = "link"><p>Guide</p></a>
+            <div id = "help">
+                <a href="./guide.html" class = "link"><p>Integrate with Mobile</p></a>
             </div>
 	    </div>
     </header>
     <main>
-        <div id = "url-form" style = "width: 80%; margin:auto; padding-top: 25%;">
+        <div id = "url-form" style = "width: 85%; margin:auto; padding-top: 25%;">
             <input type = "text" value= "URL" id = "urlbar">
             <input type = "submit" value = "get Song" id = "getsong" style = "height: 35px;">
+            <input type = "submit" value = "to Mobiles" id = "tomobiles" style = "height: 35px;">
         </div>
         <div id = "error-box">
             <p id = "login-error"></p>
@@ -46,25 +46,29 @@
         </div>
     </footer>
     <script type = "text/javascript">
+        var host = getHostName();
         cookies = document.cookie.split(';')
         lastLogedUserIndex = getCookie('lastlogeduserindex')
-        lastLogedUserName = getCookie('name'+lastLogedUserIndex)
+        console.log(lastLogedUserIndex)
+        lastLogedUserEmail = getCookie('email'+lastLogedUserIndex)
         lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
-        function loginMode(){ //TODO check cookies authentications
+        function loginMode() { //TODO check cookies authentications
             console.log("loginMode")
-            document.getElementById("devices").style.display = "block"
             document.getElementById("logout").style.display = "block"
             document.getElementById("login").style.display = "none"
             document.getElementById("signup").style.display = "none"
+            document.getElementById("signup").style.display = "none"
 	    }
-        function logoutMode(){
-            console.log("logoutMode")
-            document.getElementById("devices").style.display = "none";
+
+        function logoutMode() {
+            console.log("logoutMode")   
             document.getElementById("logout").style.display = "none";
             document.getElementById("login").style.display = "block"
             document.getElementById("signup").style.display = "block"
+            document.getElementById("tomobiles").style.display = "block"
         }
-        function getSong(){
+
+        function getSong() {
             var v = document.getElementById("urlbar").value;
             // below you will download song from givin user url, before force dowload
             // you should be sure that download will work. 
@@ -77,30 +81,67 @@
 		        alert("bad URL")
             }
             else{
-                name = getCookie('name'+lastLogedUserIndex)
+                email = getCookie('email'+lastLogedUserIndex)
                 pass = getCookie('pass'+lastLogedUserIndex)
                 songId = v.split("?v=")[1]
                 if(songId.includes("&")){
                     songId = songId.split("&")[0]
                 }
-                window.location.href = "http://92.222.80.85:8080/sfp/getsong?"+
-                "forcedownload=true&mobilesdownload=true&name="+name+"&pass="+pass+"&url="+songId
+                window.location.href = host +"sfp/getsong?"+
+                "forcedownload=true&mobilesdownload=true&email="+e64(email)+"&pass="+e64(pass)+"&url="+songId
             }
         }
-        function getCookie(cname){
-            cookies = document.cookie.split(';')
-            console.log("cookies length  "+ cookies.length)
-            for(i = 0; i < cookies.length; i++){
-                console.log("cookies"+i+" : "+cookies[i]);
-                keyValuePair = cookies[i].split('=')
-                if(keyValuePair[0].trim() == cname){
-                    return keyValuePair[1].trim()
+
+        function toMobiles() {
+            var request = new XMLHttpRequest()
+            request.onreadystatechange = function() {
+                if(this.status >= 400) {
+                    console.log('user error')
+                } else if (this.status >= 500) {
+                    console.log('server error')
                 }
             }
-            return -1 
+            request.open('GET', host+'sfp/getsong?email='+email+'&pass='+pass+'&mobilesdownload=true')
+            request.send()
         }
-        function init(){
-            if(lastLogedUserPass == -1 || lastLogedUserName == -1){
+        
+        function getCookie(cname) {
+
+            cname = e64(cname);
+            console.log('cname = '+cname)
+            cookies = document.cookie.split(';')
+            for(i = 0; i < cookies.length; i++) {
+                keyValuePair = splitCookies(cookies[i])
+                console.log('key = '+keyValuePair[0]+', value = '+keyValuePair[1]+ ', (cnmae==key) = '+(cname.trim()==keyValuePair[0].trim()))
+                if(keyValuePair[0].trim() == cname.trim()) {
+                    return d64(keyValuePair[1])
+                }
+            }
+            console.log('-1 returned')
+            return -1
+        }
+
+        function splitCookies(cookie) {
+            if(!cookie.includes('=')) throw 'wrong format cookie ='+cookie
+            var equalReached = false;
+            var count = 0;
+            while(true) {
+
+                if(cookie.charAt(count) == '=') {
+                    equalReached = true;
+                } else {
+                    if(equalReached) {
+                        return [cookie.substring(0, count-1), cookie.substring(count, cookie.length)]
+                    }
+                }
+                count++
+
+            }
+            return cookie.split('=')
+        }
+        
+        function init() {
+            if(lastLogedUserPass == -1 || lastLogedUserEmail == -1){
                 logoutMode()
                 return
             }
@@ -108,17 +149,30 @@
             checkAuthRequest.onreadystatechange = function(){
                 console.log("ready state change")
                 if(this.status == 401){
-                    window.location.href = "http://92.222.80.85:8080/sfp/login.html"
+                    window.location.href = host +"sfp/login.html"
                 }
                 else if(this.status == 200){    
                     loginMode() 
                 }
             }
-            checkAuthRequest.open('GET', "http://92.222.80.85:8080/sfp/getsong?"+
-                "checkuser=true&name="+lastLogedUserName+"&pass="+lastLogedUserPass)
+            checkAuthRequest.open('GET', 
+                host +"sfp/getsong?"+"checkuser=true&email="+lastLogedUserEmail+"&pass="+lastLogedUserPass)
             checkAuthRequest.send()
-        }init()
+        }
+        
+        window.alert("nothing") 
+        init()
+        
+        function e64(m) {
+            return Base64.encode(m);
+        }
+        
+        function d64(e) {
+            return Base64.decode(e);
+        }
+        
         document.getElementById("logout").addEventListener('click', logoutMode)
         document.getElementById("getsong").addEventListener('click', getSong)
+        document.getElementById('tomobiles').addEventListener('click', toMobiles);
     </script>
 </body>

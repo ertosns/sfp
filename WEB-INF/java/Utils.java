@@ -13,14 +13,6 @@ public final class Utils implements Consts{
         return Base64.getEncoder().encode(m.getBytes());
     }
 
-    public static String toBase64Url(String m) {
-        return Base64.getUrlEncoder().encodeToString(m.getBytes());
-    }
-
-    public static byte[] toBase64UrlBytes(String m) {
-        return Base64.getUrlEncoder().encode(m.getBytes());
-    }
-
     public static String base64ToString(String s){
         return new String(Base64.getDecoder().decode(s.getBytes()));
     }
