@@ -50,10 +50,63 @@
         cookies = document.cookie.split(';')
         lastLogedUserIndex = getCookie('lastlogeduserindex')
         console.log(lastLogedUserIndex)
-        lastLogedUserEmail = getCookie('email'+lastLogedUserIndex)
+        
+	function debug(s) {
+	    console.log('debug: '+s)
+	}
+
+        function init() {
+ 	    		  
+	    debug('init')
+            if(lastLogedUserIndex == -1){
+                logoutMode()
+                return
+            }
+	      lastLogedUserEmail = getCookie('email'+lastLogedUserIndex)
         lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
-        function loginMode() { //TODO check cookies authentications
-            console.log("loginMode")
+            checkAuthRequest = new XMLHttpRequest()
+            checkAuthRequest.onreadystatechange = function(){
+                console.log("ready state change")
+                if(this.status == 401){
+                    window.location.href = host +"sfp/login.html"
+                }
+                else if(this.status == 200){    
+                    loginMode() 
+                }
+            }
+            checkAuthRequest.open('GET', 
+                host +"sfp/getsong?"+"checkuser=true&email="+lastLogedUserEmail+"&pass="+lastLogedUserPass)
+            checkAuthRequest.send()
+        }
+        init()
+        
+        function getCookie(cname) {
+	    
+            debug('getCookie with cname = '+cname)
+            cname = e64(cname);
+            console.log('getCookie, cname encoded = '+cname)
+            cookies = document.cookie.split(';')
+	    cookiesLen = cookies.length
+	    if(cookiesLen == 0)
+	        return -1
+	    debug('getCookie, cookies length = '+cookiesLen)
+           for(i = 0; i < cookies.length; i++) {
+                if(cookies[i] == '')
+	            return -1
+                keyValuePair = splitCookies(cookies[i])
+                console.log('key = '+keyValuePair[0]+', value = '+keyValuePair[1]+ ', (cnmae==key) = '+(cname.trim()==keyValuePair[0].trim()))
+                if(keyValuePair[0].trim() == cname.trim()) {
+                    return d64(keyValuePair[1])
+                }
+            }
+            console.log('-1 returned')
+            return -1
+			  }
+
+           
+			  
+	function loginMode() { //TODO check cookies authentications
+            debug("loginMode")
             document.getElementById("logout").style.display = "block"
             document.getElementById("login").style.display = "none"
             document.getElementById("signup").style.display = "none"
@@ -61,7 +114,7 @@
 	    }
 
         function logoutMode() {
-            console.log("logoutMode")   
+            debug("logoutMode")   
             document.getElementById("logout").style.display = "none";
             document.getElementById("login").style.display = "block"
             document.getElementById("signup").style.display = "block"
@@ -69,6 +122,7 @@
         }
 
         function getSong() {
+	    debug('getSong')
             var v = document.getElementById("urlbar").value;
             // below you will download song from givin user url, before force dowload
             // you should be sure that download will work. 
@@ -93,6 +147,7 @@
         }
 
         function toMobiles() {
+	    debug('toMobiles')
             var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
                 if(this.status >= 400) {
@@ -104,24 +159,10 @@
             request.open('GET', host+'sfp/getsong?email='+email+'&pass='+pass+'&mobilesdownload=true')
             request.send()
         }
-        
-        function getCookie(cname) {
 
-            cname = e64(cname);
-            console.log('cname = '+cname)
-            cookies = document.cookie.split(';')
-            for(i = 0; i < cookies.length; i++) {
-                keyValuePair = splitCookies(cookies[i])
-                console.log('key = '+keyValuePair[0]+', value = '+keyValuePair[1]+ ', (cnmae==key) = '+(cname.trim()==keyValuePair[0].trim()))
-                if(keyValuePair[0].trim() == cname.trim()) {
-                    return d64(keyValuePair[1])
-                }
-            }
-            console.log('-1 returned')
-            return -1
-        }
 
         function splitCookies(cookie) {
+	    debug('splitCookies with cookie = '+cookie)		   
             if(!cookie.includes('=')) throw 'wrong format cookie ='+cookie
             var equalReached = false;
             var count = 0;
@@ -139,40 +180,21 @@
             }
             return cookie.split('=')
         }
+
         
-        function init() {
-            if(lastLogedUserPass == -1 || lastLogedUserEmail == -1){
-                logoutMode()
-                return
-            }
-            checkAuthRequest = new XMLHttpRequest()
-            checkAuthRequest.onreadystatechange = function(){
-                console.log("ready state change")
-                if(this.status == 401){
-                    window.location.href = host +"sfp/login.html"
-                }
-                else if(this.status == 200){    
-                    loginMode() 
-                }
-            }
-            checkAuthRequest.open('GET', 
-                host +"sfp/getsong?"+"checkuser=true&email="+lastLogedUserEmail+"&pass="+lastLogedUserPass)
-            checkAuthRequest.send()
-        }
         
-        window.alert("nothing") 
-        init()
-        
-        function e64(m) {
-            return Base64.encode(m);
+	function e64(m) {
+	    debug('e64 m = '+m)		   
+            return Base64.encode(m)
         }
         
         function d64(e) {
-            return Base64.decode(e);
+            debug('d64 e = '+e)
+            return Base64.decode(e)
         }
         
-        document.getElementById("logout").addEventListener('click', logoutMode)
-        document.getElementById("getsong").addEventListener('click', getSong)
-        document.getElementById('tomobiles').addEventListener('click', toMobiles);
+        document.getElementById('logout').addEventListener('click', logoutMode)
+        document.getElementById('getsong').addEventListener('click', getSong)
+        document.getElementById('tomobiles').addEventListener('click', toMobiles)
     </script>
 </body>

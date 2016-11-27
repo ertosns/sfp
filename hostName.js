@@ -1,3 +1,3 @@
 function getHostName() {
-	return "http://localhost:8080/";
+	return "http://192.168.1.2:8080/";
 }
