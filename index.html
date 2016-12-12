@@ -48,24 +48,26 @@
     <script type = "text/javascript">
         var host = getHostName();
         cookies = document.cookie.split(';')
-        lastLogedUserIndex = getCookie('lastlogeduserindex')
+        var lastLogedUserIndex = getCookie('lastlogeduserindex')
+        var email
+        var pass
         console.log(lastLogedUserIndex)
         
-	function debug(s) {
-	    console.log('debug: '+s)
-	}
+	    function debug(s) {
+	        console.log('debug: '+s)
+	    }
 
         function init() {
  	    		  
-	    debug('init')
-            if(lastLogedUserIndex == -1){
+	        debug('init')
+            if(lastLogedUserIndex == -1) {
                 logoutMode()
                 return
             }
-	      lastLogedUserEmail = getCookie('email'+lastLogedUserIndex)
-        lastLogedUserPass = getCookie('pass'+lastLogedUserIndex)
+	        email = getCookie('email'+lastLogedUserIndex)
+            pass = getCookie('password'+lastLogedUserIndex)
             checkAuthRequest = new XMLHttpRequest()
-            checkAuthRequest.onreadystatechange = function(){
+            checkAuthRequest.onreadystatechange = function() {
                 console.log("ready state change")
                 if(this.status == 401){
                     window.location.href = host +"sfp/login.html"
@@ -75,7 +77,7 @@
                 }
             }
             checkAuthRequest.open('GET', 
-                host +"sfp/getsong?"+"checkuser=true&email="+lastLogedUserEmail+"&pass="+lastLogedUserPass)
+                host +"sfp/getsong?"+"checkuser=true&"+eURI64("email")+"="+email+"&"+eURI64("pass")+"="+pass)
             checkAuthRequest.send()
         }
         init()
@@ -86,26 +88,26 @@
             cname = e64(cname);
             console.log('getCookie, cname encoded = '+cname)
             cookies = document.cookie.split(';')
-	    cookiesLen = cookies.length
-	    if(cookiesLen == 0)
-	        return -1
-	    debug('getCookie, cookies length = '+cookiesLen)
-           for(i = 0; i < cookies.length; i++) {
+	        cookiesLen = cookies.length
+	        if(cookiesLen == 0)
+	            return -1
+	        debug('getCookie, cookies length = '+cookiesLen)
+            for(i = 0; i < cookies.length; i++) {
                 if(cookies[i] == '')
 	            return -1
                 keyValuePair = splitCookies(cookies[i])
                 console.log('key = '+keyValuePair[0]+', value = '+keyValuePair[1]+ ', (cnmae==key) = '+(cname.trim()==keyValuePair[0].trim()))
-                if(keyValuePair[0].trim() == cname.trim()) {
-                    return d64(keyValuePair[1])
+                if(keyValuePair[0].trim() == cname) {
+                    return keyValuePair[1]
                 }
             }
             console.log('-1 returned')
             return -1
-			  }
+		}
 
            
 			  
-	function loginMode() { //TODO check cookies authentications
+	    function loginMode() { //TODO check cookies authentications
             debug("loginMode")
             document.getElementById("logout").style.display = "block"
             document.getElementById("login").style.display = "none"
@@ -122,7 +124,13 @@
         }
 
         function getSong() {
-	    debug('getSong')
+	        debug('getSong')
+            var songId = getSongId()
+            window.location.href = host +"sfp/getsong?"+
+            "forcedownload=true&"+eURI64("email")+"="+email+"&"+eURI64("pass")+"="+pass+"&url="+songId
+        }
+
+        function getSongId() {
             var v = document.getElementById("urlbar").value;
             // below you will download song from givin user url, before force dowload
             // you should be sure that download will work. 
@@ -132,22 +140,20 @@
             if(!(v.startsWith("https://www.youtube.com/watch?v=")||
                 v.startsWith("https://youtube.com/watch?v=")||
                 v.startsWith("https://m.youtube.com/watch?v="))) {
-		        alert("bad URL")
+                alert("bad URL")
             }
             else{
-                email = getCookie('email'+lastLogedUserIndex)
-                pass = getCookie('pass'+lastLogedUserIndex)
                 songId = v.split("?v=")[1]
                 if(songId.includes("&")){
                     songId = songId.split("&")[0]
                 }
-                window.location.href = host +"sfp/getsong?"+
-                "forcedownload=true&mobilesdownload=true&email="+e64(email)+"&pass="+e64(pass)+"&url="+songId
+                return songId
             }
         }
 
         function toMobiles() {
-	    debug('toMobiles')
+	        debug('toMobiles')
+            var songId = getSongId()
             var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
                 if(this.status >= 400) {
@@ -156,13 +162,14 @@
                     console.log('server error')
                 }
             }
-            request.open('GET', host+'sfp/getsong?email='+email+'&pass='+pass+'&mobilesdownload=true')
+
+            request.open('GET', host+'sfp/getsong?'+eURI64('email')+'='+email+'&'+eURI64('pass')+'='+pass+'&url='+songId+'&mobilesdownload=true')
             request.send()
         }
 
 
         function splitCookies(cookie) {
-	    debug('splitCookies with cookie = '+cookie)		   
+	        debug('splitCookies with cookie = '+cookie)		   
             if(!cookie.includes('=')) throw 'wrong format cookie ='+cookie
             var equalReached = false;
             var count = 0;
@@ -183,9 +190,15 @@
 
         
         
-	function e64(m) {
-	    debug('e64 m = '+m)		   
+	    function e64(m) {
+	        debug('e64 m = '+m)		   
             return Base64.encode(m)
+        }
+
+        function eURI64(m) {
+            //replaces (+, -), (/, _), (=, '')
+            debug('e64 m = '+m)        
+            return Base64.encodeURI(m)
         }
         
         function d64(e) {

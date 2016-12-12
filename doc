@@ -1,0 +1,35 @@
+short_video https://www.youtube.com/watch?v=bTTi43A6QYM
+
+AUTH:
+    NUM: [0-9]+
+    WORD: [\\w]{4, 20}
+    PASS: [\\w]{8, 20}
+    EMAIL: //use api-regex
+    SIGNUP: signup=true&base64Uri(name)=base64(WORD)&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
+    LOGIN: login=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
+    CHECKUSER: checkuser=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
+
+COOKIES:
+   base64(email), base64(EMAIL)
+   base64(password), base64(PASS)
+   base64(lastlogeduserindex), NUM
+   base64(numoflogedusers), NUM    
+    
+RESPONSE_CODE:
+    int USER_ALREADY_FOUND_CODE = 401;
+    int BAD_AUTH_CODE = 402;
+    int CONNECTIVITY_ERR_CODE = 403;
+    int SERVER_ERR_CODE = 500;
+    int SUCCESS_CODE = 200;
+
+LISTENER_SOCKET_PROTOCOL
+   CLIENT ->UNIQUI_ID_SIZE|UNIQUE_ID
+   SERVER ->W8_INTERVAL_INT|HAS_SONG_FLAG(1=TRUE&0=FALSE)|SONG_NAME_SIZE|SONG_NAME|SONG_SIZE|SONG
+
+COLORS:
+    bright
+      shade1:ff7f00
+      shade2:bf621a //darker
+    dark 343434
+
+      

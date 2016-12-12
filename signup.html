@@ -96,7 +96,7 @@
                 }
             } 
 
-	        request.open("GET", host+"/sfp/getsong?name="+e64(name)+"&pass="+e64(pass)+"&email="+e64(email)+"&signup=true")
+	        request.open("GET", host+"/sfp/getsong?"+eURI64("name")+"="+e64(name)+"&"+eURI64("pass")+"="+e64(pass)+"&"+eURI64("email")+"="+e64(email)+"&signup=true")
             request.send()
         }
 
@@ -113,6 +113,10 @@
         }
         
         function e64(message) {
+            return Base64.encode(message)
+        }
+
+        function eURI64(message) {
             return Base64.encode(message)
         }
 

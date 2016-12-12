@@ -1,0 +1,21 @@
+apply plugin: 'java'
+
+sourceSets {
+	main {
+		output.classesDir 'WEB-INF/classes'
+		java {
+			srcDir 'WEB-INF/java'
+        }
+	}
+}
+
+dependencies {
+	compile fileTree('./WEB-INF/lib').include('*')
+	compile fileTree('../../lib/').include('servlet-api.jar')
+}
+
+task listen(type: JavaExec) {
+	classpath = sourceSets.main.runtimeClasspath
+	main = 'Listener'
+}
+

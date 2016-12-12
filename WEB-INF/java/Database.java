@@ -39,16 +39,16 @@ public class Database implements Consts {
             ResultSet userInfoTableRS = meta.getColumns(null, null, "USER_INFO", null);
             String userInfoTable = "CREATE TABLE USER_INFO ( "
                 + "ID INT PRIMARY KEY AUTO_INCREMENT, "
-                + "NAME VARCHAR(10) NOT NULL, "
-                + "PASS VARCHAR(10) NOT NULL, "
-                + "EMAIL VARCHAR(300) NOT NULL, " //TODO what is max len of e-mail
+                + "NAME VARCHAR(20) NOT NULL, "
+                + "PASS VARCHAR(20) NOT NULL, "
+                + "EMAIL VARCHAR NOT NULL, " //TODO what is max len of e-mail
                 + "DOWNLOADS INT NOT NULL);";
             String anonymousDownloads = "CREATE TABLE ANONYMOUS_DOWNLOADS ( "
                 + "ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "DOWNLOAD_DATE DATE NOT NULL);";
             String songs = "CREATE TABLE SONGS (ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "USER_ID INT NOT NULL, " //TODO does quering hashed id instead of id(int) response faster considering decoding overhead.
-                + "URL VARCHAR(50) NOT NULL, "
+                + "URL NOT NULL, "
                 + "DATE DATE NOT NULL);";
         
             if (!userInfoTableRS.next()) {
@@ -79,10 +79,10 @@ public class Database implements Consts {
 
     public void insertSong(int id,  String urlId) {
         try {
-            stm.execute("INSERT INTO SONGS (ID, URL, MILLIS) VALUES ("
-                + id + ", "
-                + urlId + ", "
-                + new java.sql.Date(new java.util.Date().getTime())+");");
+            stm.execute("INSERT INTO SONGS (USER_ID, URL, DATE) VALUES ("
+                + id + ", '"
+                + urlId + "', '"
+                + new java.sql.Date(new java.util.Date().getTime())+"');");
             l.info("insertSong, song url inserted with id = "+id);
         } catch (SQLException sql) {
             sql.printStackTrace();
@@ -91,7 +91,7 @@ public class Database implements Consts {
     
     public void removeSong(int id) {
         try {
-            stm.execute("DELETE FROM SONGS WHERE ID = "+id+";");
+            stm.execute("DELETE FROM SONGS WHERE USER_ID = "+id+";");
             l.info("removeSong, song removed with id = "+id);
         } catch (SQLException sql) {
             sql.printStackTrace();
@@ -100,7 +100,7 @@ public class Database implements Consts {
 
     public String getSongUrlId(int id) {
         try {
-            ResultSet rs = stm.executeQuery("SELECT URL FROM SONGS WHERE ID = "+id+";");
+            ResultSet rs = stm.executeQuery("SELECT URL FROM SONGS WHERE USER_ID = "+id+";");
             if(rs.next()) return rs.getString(1);
         } catch (SQLException sql) {
             sql.printStackTrace();
@@ -110,7 +110,7 @@ public class Database implements Consts {
 
     public java.util.Date getSongDate(int id) {
         try {
-            ResultSet rs = stm.executeQuery("SELECT DATE FROM SONGS WHERE ID = "+id+";");
+            ResultSet rs = stm.executeQuery("SELECT DATE FROM SONGS WHERE USER_ID = "+id+";");
             if(rs.next()) return new java.util.Date(rs.getDate(1).getTime());
         } catch (SQLException sql) {
             sql.printStackTrace();

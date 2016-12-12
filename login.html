@@ -52,7 +52,8 @@
     </footer>
     <script type = "text/javascript">
         document.getElementById("loginbtn").addEventListener('click', login, false)
-        function login(){
+        function login() {
+            console.log("logging")
             var email = document.getElementById("email").value
             var pass = document.getElementById("password").value
             var BAD_AUTH = 'Bad AUTH! please check you password or username or both!';
@@ -62,14 +63,14 @@
             //var remember = document.getElementById("remember").checked;
             var request = new XMLHttpRequest()
             request.onreadystatechange = function() {
-                if(this.status == 401){
+                if(this.status == 401) {
                     document.getElementById("errorbox").style.display = "block"
                     var loginpar = document.getElementById("loginError")
                     //TODO optimize to be more specific should check username or password or both.
-                    if(!loginpar.childNodes[0]){
+                    if(!loginpar.childNodes[0]) {
                         loginpar.appendChild(document.createTextNode(BAD_AUTH))
                     } 
-                    else{
+                    else {
                         loginpar.replaceChild(document.createTextNode(BAD_AUTH), loginpar.childNodes[0])
                     }
                 }
@@ -77,13 +78,21 @@
                     window.location.href = host +"sfp/"
                 }
             } 
-	        request.open("GET", host +"sfp/getsong?email="+e64(email)+"&pass="+e64(pass)+
-    				"&login=true")
+            console.log("host = "+host)
+	        request.open("GET", host +"sfp/getsong?"+eURI64("email")+"="+e64(email)+"&"+eURI64("pass")+"="+e64(pass)+"&login=true")
             request.send()
         }
 
         function checkValidity(message){
             return message	
+        }
+
+
+        function eURI64(message) {
+            console.log("euri message = "+message)
+            var encoded = Base64.encodeURI(message)
+            console.log("encoded message = "+encoded)
+            return encoded
         }
 
         function e64(message) {
