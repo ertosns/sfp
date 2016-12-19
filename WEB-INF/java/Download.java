@@ -9,8 +9,6 @@ import java.util.logging.Handler;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
-//TODO register users and info them of registered and active devices.
-//TODO log
 public final class Download extends HttpServlet implements Consts{
     
     
@@ -67,8 +65,13 @@ public final class Download extends HttpServlet implements Consts{
         boolean checkUser = Boolean.parseBoolean(request.getParameter("checkuser"));
         boolean forceDownload = Boolean.parseBoolean(request.getParameter("forcedownload"));
         boolean mobilesDownload = Boolean.parseBoolean(request.getParameter("mobilesdownload"));
+
+        String uniqueId = request.getParameter("id"); //uniqueId of mobile user
         
-        String urlId = request.getParameter("url");
+        String urlId = null;
+        if(uniqueId != null || ) urlId = request.getParameter("songId"); //from mobile
+        else urlId = request.getParameter("url"); //from client
+
         boolean valid = validateUrlId(urlId);
 
         Cookie emailCookie = null;
@@ -81,11 +84,22 @@ public final class Download extends HttpServlet implements Consts{
         database = new Database();
         String pass =  null; 
         String email = null;
-        try {
-            pass = Utils.base64ToString(request.getParameter(Utils.toBase64Uri("pass")));
-            email = Utils.base64ToString(request.getParameter(Utils.toBase64Uri("email")));
-        } catch (Exception e) {
-            e.printStackTrace();
+
+        if(urlId != null && !uniqueId.equals("null")) {
+            String[] idAuth = Utils.base64ToString(uniqueId).split(ID_SPLITER);
+            email = idAuth[0];
+            pass = idAuth[1];
+        } else {
+            try {
+                String requestPass = request.getParameter(Utils.toBase64Uri("pass"));
+                l.info("requested encoded pass: "+requestPass);
+                pass = Utils.base64ToString(requestPass);
+                String requestEmail = request.getParameter(Utils.toBase64Uri("email"));
+                l.info("request encoded email: "+requestEmail);
+                email = Utils.base64ToString(requestEmail);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
 
         if(pass!= null & email != null) {
@@ -191,7 +205,7 @@ public final class Download extends HttpServlet implements Consts{
             } catch (Exception e) { 
                 // should inform user
                e.printStackTrace();
-               response.setStatus(SERVER_ERR_CODE); //TODO implement this
+               response.setStatus(SERVER_ERR_CODE); 
                return;
             }
         }
@@ -238,9 +252,9 @@ public final class Download extends HttpServlet implements Consts{
         }
     }
 
-    private byte[] generateUniqueId(String email, String pass, int id) {
-        //TODO id must include password and email for authentication, attacker (if he|she knows uniqueId algorithm) can fake devices
-        String uniqueId = Utils.toBase64(new StringBuilder(email).append(ID_SPLITER).append(pass).append(ID_SPLITER).append(id).toString());
+    private byte[] generateUniqueId(String email, String pass, int id, String url) {
+        String uniqueId = Utils.toBase64(new StringBuilder(email).append(ID_SPLITER).append(pass).append(ID_SPLITER)
+            .append(id).append(ID_SPLITER).append(url).toString());
         l.info("generating user uniqueId for id = "+uniqueId);
         return uniqueId.getBytes();
     }

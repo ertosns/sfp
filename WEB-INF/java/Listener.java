@@ -3,10 +3,10 @@ import java.util.*;
 import java.net.*;
 import java.util.logging.*;
 
-//TODO after song received at Client send, client should send acq flag, and clean up in server side|attach timestap with seach file for cashe
+
 public class Listener implements Runnable, Consts{
 
-    //TODO register devices to support multiple devices.    
+    
     Database database = null;
     Logger l =  Logger.getLogger(this.toString());
 
@@ -18,7 +18,6 @@ public class Listener implements Runnable, Consts{
     public Listener(Socket socket) {
         sock = socket;
 
-        //TODO init one object of the following, (res) doens't database methodes need to be synchronized?
         l.setUseParentHandlers(false);
         l.setLevel(Level.INFO);
         handler.setLevel(Level.INFO);
@@ -44,12 +43,12 @@ public class Listener implements Runnable, Consts{
                 is.read(uniqueIdBytes);
                 String encodedId = new String(uniqueIdBytes);
                 l.info("encodedId = "+encodedId);
-     			int id = extractId(Utils.base64ToString(encodedId));
-                //TODO authenticat user
-                write(intToBytes(W8_INTERVAL)); //TODO make interval react to server load.
+                String[] idSegments = Utils.base64ToString(encodedId).split(ID_SPLITER);
+     			// {email, pass, id, url}
+
+                write(intToBytes(W8_INTERVAL)); 
                 String url;
-                if((url = database.getSongUrlId(id)) != null) {
-                	//TODO res send bytes while reading vs sending buffer.
+                if((url = database.getSongUrlId(idSegments[0], idSegments[1], idSegments[2])) != null) {
                     l.info("client found");
                 	write(HAS_SONG_FLAG);
                 	sendSong(url);
@@ -59,7 +58,7 @@ public class Listener implements Runnable, Consts{
                     boolean success = (is.read() == 1)? true:false;
                     if(success) {
                         l.info("song received successfully, cleaning up");
-                        clean(id); //TODO or add timestame to song for cashe.
+                        clean(idSegments[2], idSegments[3]); //TODO or add timestame to song for cashe.
                     }
                 }
                 else {
@@ -74,7 +73,7 @@ public class Listener implements Runnable, Consts{
             }
     }
 
-    public void clean (int id) {
+    public void clean (int id, String url) {
         // clean song in songs file |TODO stick timestamp for cashe
         // remove song from database.
         try {
@@ -82,7 +81,7 @@ public class Listener implements Runnable, Consts{
                 songFile.delete();
                 l.info("song file deteted");
             }
-            database.removeSong(id);
+            database.removeSong(id, url);
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -8,11 +8,7 @@ import java.util.logging.Level;
 /* application protocol
  * SERVER_ERROR  :if method return -1 it's database error
  */
-
-// TODO check client errors, 
-// TODO check all TODO lines embeded between code lines.
-// TODO depending on how i keep track of user mobile ip you need to update device ip.
-// TODO (fix) log doesn't work!!
+ 
 
 public class Database implements Consts {
     Connection con = null;
@@ -41,13 +37,13 @@ public class Database implements Consts {
                 + "ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "NAME VARCHAR(20) NOT NULL, "
                 + "PASS VARCHAR(20) NOT NULL, "
-                + "EMAIL VARCHAR NOT NULL, " //TODO what is max len of e-mail
+                + "EMAIL VARCHAR NOT NULL, "
                 + "DOWNLOADS INT NOT NULL);";
             String anonymousDownloads = "CREATE TABLE ANONYMOUS_DOWNLOADS ( "
                 + "ID INT PRIMARY KEY AUTO_INCREMENT, "
                 + "DOWNLOAD_DATE DATE NOT NULL);";
             String songs = "CREATE TABLE SONGS (ID INT PRIMARY KEY AUTO_INCREMENT, "
-                + "USER_ID INT NOT NULL, " //TODO does quering hashed id instead of id(int) response faster considering decoding overhead.
+                + "USER_ID INT NOT NULL, " 
                 + "URL NOT NULL, "
                 + "DATE DATE NOT NULL);";
         
@@ -89,17 +85,18 @@ public class Database implements Consts {
         }
     }
     
-    public void removeSong(int id) {
+    public void removeSong(int id, String url) {
         try {
-            stm.execute("DELETE FROM SONGS WHERE USER_ID = "+id+";");
+            stm.execute("DELETE FROM SONGS WHERE USER_ID = "+id+" AND URL = '"+url+"';");
             l.info("removeSong, song removed with id = "+id);
         } catch (SQLException sql) {
             sql.printStackTrace();
         }
     }
 
-    public String getSongUrlId(int id) {
+    public String getSongUrlId(String email, String pass, int id) {
         try {
+            if(!(getAuthID(pass, email) > 0)) return null; 
             ResultSet rs = stm.executeQuery("SELECT URL FROM SONGS WHERE USER_ID = "+id+";");
             if(rs.next()) return rs.getString(1);
         } catch (SQLException sql) {
@@ -130,7 +127,6 @@ public class Database implements Consts {
     }
 
     //anonymous downloads
-
     
     public void incrementUserLocalDownloadsNum(int id) throws SQLException {
         int downloads = 0;

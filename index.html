@@ -126,6 +126,7 @@
         function getSong() {
 	        debug('getSong')
             var songId = getSongId()
+            
             window.location.href = host +"sfp/getsong?"+
             "forcedownload=true&"+eURI64("email")+"="+email+"&"+eURI64("pass")+"="+pass+"&url="+songId
         }

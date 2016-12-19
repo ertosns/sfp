@@ -1,4 +1,4 @@
-short_video https://www.youtube.com/watch?v=bTTi43A6QYM
+TESTING_SHORT_VIDEO: https://www.youtube.com/watch?v=bTTi43A6QYM
 
 AUTH:
     NUM: [0-9]+
@@ -8,7 +8,8 @@ AUTH:
     SIGNUP: signup=true&base64Uri(name)=base64(WORD)&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
     LOGIN: login=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
     CHECKUSER: checkuser=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)
-
+SERVICES:
+    DOWNLOADTOMOBILES: base64Uri(email)=EMAIL&base64Uri(pass)=PASS&url=songId&mobilesdownload=true
 COOKIES:
    base64(email), base64(EMAIL)
    base64(password), base64(PASS)
@@ -23,13 +24,22 @@ RESPONSE_CODE:
     int SUCCESS_CODE = 200;
 
 LISTENER_SOCKET_PROTOCOL
-   CLIENT ->UNIQUI_ID_SIZE|UNIQUE_ID
-   SERVER ->W8_INTERVAL_INT|HAS_SONG_FLAG(1=TRUE&0=FALSE)|SONG_NAME_SIZE|SONG_NAME|SONG_SIZE|SONG
+   CLIENT ->UNIQUI_ID_SIZE|UNIQUE_ID|ACK_FLAG(1=ACK|0=FAILED)
+   SERVER ->W8_INTERVAL_INT|HAS_SONG_FLAG(1=TRUE|0=FALSE)|SONG_NAME_SIZE|SONG_NAME|SONG_SIZE|SONG
 
 COLORS:
-    bright
-      shade1:ff7f00
-      shade2:bf621a //darker
-    dark 343434
+    bright(orange)
+      shade1: ---------> 0xff7f00
+      shade2(darker): -> 0xbf621a 
+    dark(grey) --------> 0x343434
 
-      
+DATABASE:
+    SONGS:  ID(AUTO_INCREMENT)|USER_ID(INT, id from USER_INFO table)|URL(VARCHAR, video id)|DATE(DATE, date of download request)
+    USER_INFO: ID(AUTO_INCREMENT)|NAME(VARCHAR)|PASS(VARCHAR)|EMAIL(VARCHAR)|DOWNLOADS(INT)
+    ANONYMOUS_DOWNLOADS: ID(AUTO_INCREMENT)|DOWNLOAD_DATE(DATE)
+
+TODO_FEATURES
+    //TODO consider supporting multiple devices.
+    //TODO make interval react to server load(AFTER CREATING TRAFFIC MONITOR)
+    //TODO (res) send bytes while reading vs sending buffer(FOR FASTER DOWNLOAD)
+    
