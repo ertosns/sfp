@@ -24,5 +24,7 @@ public interface Consts {
     int SERVER_ERR_CODE = 500;
     int SUCCESS_CODE = 200;
     String ID_SPLITER = ",";
-    
+    int TITLE_SIZE = 30;
+    String CHARS_CHARSET = "ISO-8859-1";
+    String FORWARDSLASH_SPLITER = "/";
 }

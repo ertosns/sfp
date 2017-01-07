@@ -11,7 +11,7 @@ import com.github.axet.vget.VGet;
 public class GetSong {
     public static void main(String[] args){
         try {
-            VGet vget = new VGet(new URL(args[0]), new File("../songs"));
+            VGet vget = new VGet(new URL(args[0]), new File("../../../songs"));
             vget.download();
         } catch(MalformedURLException e){
             e.printStackTrace();

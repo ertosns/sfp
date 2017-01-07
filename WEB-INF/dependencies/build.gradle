@@ -3,6 +3,7 @@ apply plugin: 'java'
 tasks.withType(Jar) {
     destinationDir = file("../lib")
 }
+
 sourceSets{
 	main{
 		java{
@@ -10,11 +11,13 @@ sourceSets{
 		}
 	}
 }
+
 dependencies{
 	compile fileTree('../lib').include('*')
 }
+
 task runApp(type: JavaExec) {
   	classpath = sourceSets.main.runtimeClasspath
   	main = 'com.github.axet.vget.GetSong'
-  	args 'https://www.youtube.com/watch?v=mkGiWqq6dI0', '.'
+  	args 'https://www.youtube.com/watch?v=acm1NEDVhi8'
 }

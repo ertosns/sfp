@@ -14,40 +14,35 @@ public final class Download extends HttpServlet implements Consts{
     
     private boolean browser = true;
     private Database database = null;
-    private final Logger l = Logger.getLogger(this.toString());
-    Handler handler = null;
+    Log l = null;
 
     public Download() {
-
-        handler = new ConsoleHandler();
-        handler.setLevel(Level.INFO);
-        l.setUseParentHandlers(false);
-        l.addHandler(handler);
-        l.setLevel(Level.INFO);
-
+        database = new Database();
+        l = new Log(this.toString(), Log.CONSOLE);
     }
+
     // inspect cookies (names and values) for one or two cookies or both for (i.e name, pass)
     // if found name return it's value and ture else return false
     public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair) {
+        l.info("inspeck cookies for name ", name, " pass, ", pass);
         boolean cName = false;
         boolean cPass = false;
         int authIndex = 0;
-        String currentName = name;
         Cookie tmpCookie = null;
         Object[] obj = new Object[2];
         for (int i = 0; i < cookies.length; i++) {
-            if ((tmpCookie = cookies[i]).getValue().equals(currentName) || tmpCookie.getName().equals(currentName)) {
+            if ((tmpCookie = cookies[i]).getValue().equals(name) || tmpCookie.getName().equals(name)) {
                 if (cName) {
                     obj[0] = new Boolean(true);
                     return obj;
                 }
                 if (pair) {
                     cName = true;
-                    currentName = pass;
+                    name = pass;
                     continue;
                 }
                 obj[0] = new Boolean(true);
-                obj[1] = (tmpCookie.getValue().equals(currentName))? tmpCookie.getName() : tmpCookie.getValue();
+                obj[1] = (tmpCookie.getValue().equals(name))? tmpCookie.getName() : tmpCookie.getValue();
                 return obj;
             }
         }
@@ -59,175 +54,254 @@ public final class Download extends HttpServlet implements Consts{
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
       throws IOException, ServletException {
-    try {
-        boolean signup = Boolean.parseBoolean(request.getParameter("signup"));
-        boolean login = Boolean.parseBoolean(request.getParameter("login"));   
-        boolean checkUser = Boolean.parseBoolean(request.getParameter("checkuser"));
-        boolean forceDownload = Boolean.parseBoolean(request.getParameter("forcedownload"));
-        boolean mobilesDownload = Boolean.parseBoolean(request.getParameter("mobilesdownload"));
-
-        String uniqueId = request.getParameter("id"); //uniqueId of mobile user
         
-        String urlId = null;
-        if(uniqueId != null || ) urlId = request.getParameter("songId"); //from mobile
-        else urlId = request.getParameter("url"); //from client
+        try {
+            boolean signup = Boolean.parseBoolean(request.getParameter("signup"));
+            boolean login = Boolean.parseBoolean(request.getParameter("login"));   
+            boolean checkUser = Boolean.parseBoolean(request.getParameter("checkuser"));
+            boolean forceDownload = Boolean.parseBoolean(request.getParameter("forcedownload"));
+            boolean mobilesDownload = Boolean.parseBoolean(request.getParameter("mobilesdownload"));
+            boolean mobile = Boolean.parseBoolean(request.getParameter("mobile"));
 
-        boolean valid = validateUrlId(urlId);
+            boolean listOfUnrespondedRequests = Boolean.parseBoolean(request.getParameter("listofunrespondedrequests"));
+            boolean listOfNewRequests = Boolean.parseBoolean(request.getParameter("listofnewrequests"));
+            boolean setRequestResponded = Boolean.parseBoolean(request.getParameter("setrequestresponded"));
 
-        Cookie emailCookie = null;
-        Cookie passCookie = null;
-        Cookie lastLogedUserIndex = null;
-        Cookie numOfLogedUsers = null;
-        int LLUI = 0;
-        int NOLU = 0;
-        int id = -1;
-        database = new Database();
-        String pass =  null; 
-        String email = null;
+            boolean listOfPeersInfoById = Boolean.parseBoolean(request.getParameter("listofpeersinfobyid"));
 
-        if(urlId != null && !uniqueId.equals("null")) {
-            String[] idAuth = Utils.base64ToString(uniqueId).split(ID_SPLITER);
-            email = idAuth[0];
-            pass = idAuth[1];
-        } else {
-            try {
-                String requestPass = request.getParameter(Utils.toBase64Uri("pass"));
-                l.info("requested encoded pass: "+requestPass);
-                pass = Utils.base64ToString(requestPass);
-                String requestEmail = request.getParameter(Utils.toBase64Uri("email"));
-                l.info("request encoded email: "+requestEmail);
-                email = Utils.base64ToString(requestEmail);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-
-        if(pass!= null & email != null) {
-            id = database.getAuthID(pass, email);
-            l.info("auth email = "+email+", pass = "+pass+", user id = "+id);
-        }
-
-        if(login||signup||checkUser){
+            boolean listOfNewSharedSongs = Boolean.parseBoolean(request.getParameter("listofnewsharedsongs"));
+            boolean listOfSharedSongs = Boolean.parseBoolean(request.getParameter("listofsharedsongs"));
             
-            if(id == -1){                
-                l.info("doGet, server error authenticating user");
-                response.setStatus(SERVER_ERR_CODE);
-                return;
-            }
+            boolean setUserImage = Boolean.parseBoolean(request.getParameter("setuserimage"));
+            boolean sendShareRequest = Boolean.parseBoolean(request.getParameter("sendsharerequest"));
+            boolean removeRelation = Boolean.parseBoolean(request.getParameter("removerelation"));
+            boolean removeSong = Boolean.parseBoolean(request.getParameter("removesong"));
+            boolean shareSong = Boolean.parseBoolean(request.getParameter("sharesong"));
+            boolean getListOfPeersIds = Boolean.parseBoolean(request.getParameter("listofpeersids"));        
+            boolean searchByEmail = Boolean.parseBoolean(request.getParameter("searchbyemail"));
+            boolean searchByName = Boolean.parseBoolean(request.getParameter("searchbyname"));
+            String message = request.getParameter("message");
+            String query = request.getParameter("query");
+            int songDatabaseId = request.getParameter("songdatabaseid");
+            int limitStart = Integer.parseIng(request.getParameter("limitstart"));
+            int limit = Integer.parseIng(request.getParameter("limit"));
+            String uniqueId = request.getParameter("id"); //uniqueId of mobile user
+            String title = request.getParameter("title");
+            String peerId = request.getParameter("peerid");
+            //TODO check title validaty, consider sql injection, remove suspicous chars
+            String urlId = null;
+            if(uniqueId != null) urlId = request.getParameter("songId"); //from mobile
+            else urlId = request.getParameter("url"); //from client
+            boolean valid = validateUrlId(urlId);
+            Cookie emailCookie = null;
+            Cookie passCookie = null;
+            Cookie lastLogedUserIndex = null;
+            Cookie numOfLogedUsers = null;
+            int LLUI = 0;
+            int NOLU = 0;
+            int id = -1;
+            String pass =  null; 
+            String email = null;
+            String nonce = null;
+            boolean checkNonce = listOfPeersInfo||listOfUnrespondedRequests;
 
-            // validate user.
-            if(checkUser == true){
-                if(id > 0){
-                    l.info("doGet, checkUser, user is found");
-                    response.setStatus(SUCCESS_CODE);
-                } else{ // id start at 1, so no valid user
-                    l.info("goGet, checkUser, user Error");
-                    response.setStatus(BAD_AUTH_CODE);
+            if(urlId != null && !uniqueId.equals("null")) {
+                String[] idAuth = Utils.base64ToString(uniqueId).split(ID_SPLITER);
+                email = idAuth[0];
+                pass = idAuth[1];
+                if(checkNonce) nonce = idAuth[2];
+                l.info("from mobile decoded unique id. email, ", email, "pass, ", pass);
+            } else {
+                try {
+                    String requestPass = request.getParameter(Utils.toBase64Uri("pass"));
+                    pass = Utils.base64ToString(requestPass);
+                    String requestEmail = request.getParameter(Utils.toBase64Uri("email"));
+                    email = Utils.base64ToString(requestEmail);
+                    l.info("url encoded email, ", email, "url encoded pass, ", pass);
+                } catch (Exception e) {
+                    e.printStackTrace();
                 }
-                return;
+            }
+             
+
+            if(pass!= null & email != null) {
+                id = database.getAuthID(pass, email);
+                if(checkNonce) id = database.getAuthId(pass, email, nonce);
+                l.info("auth id: ", id);
             }
 
-            {// prepare cookies
-                l.info("doGet, perparing cookies");
-                Cookie[] cookies = request.getCookies();
-                if (cookies != null && cookies.length > 0) {
-                    
-                    LLUI = Integer.parseInt((String)cookiesHas(cookies, Utils.base64ToString("lastlogeduserindex"), null, false)[1]);                    
-                    NOLU = Integer.parseInt((String)cookiesHas(cookies, Utils.base64ToString("numoflogedusers"), null, false)[1]);
-
-                    if (signup) {
-                        NOLU++;
-                        LLUI = NOLU-1;
-                    }
-
-                    else if(login) {
-                        String nameKey = (String)(cookiesHas(cookies, Utils.toBase64(email), null, false)[1]);
-                        LLUI = Integer.parseInt(""+ nameKey.charAt(nameKey.length()-1));
-                    }
+            if(login||signup||checkUser) {
                 
-                } else {
-                    LLUI = 0;
-                    NOLU = 1;
+                if(id == SERVER_ERROR){                
+                    l.info("server error authenticating user");
+                    response.setStatus(SERVER_ERR_CODE);
+                    return;
                 }
 
-                lastLogedUserIndex = new Cookie(Utils.toBase64("lastlogeduserindex"), new String(LLUI+""));
-                lastLogedUserIndex.setMaxAge(SIX_MONTH_SEC);
-                numOfLogedUsers = new Cookie(Utils.toBase64("numoflogedusers"), new String(NOLU+""));
-                numOfLogedUsers.setMaxAge(SIX_MONTH_SEC);
-                if (cookies == null || !(boolean)(cookiesHas(cookies, Utils.toBase64(email), Utils.toBase64(pass), true)[0])) {
-                    emailCookie = new Cookie(Utils.toBase64("email"+LLUI), Utils.toBase64(email));
-                    emailCookie.setMaxAge(SIX_MONTH_SEC);
-
-                    passCookie = new Cookie(Utils.toBase64("password"+LLUI), Utils.toBase64(pass));
-                    passCookie.setMaxAge(SIX_MONTH_SEC);
+                // validate user., 
+                if(checkUser == true){
+                    if(id > 0){
+                        l.info("checkUser, user is found");
+                        response.setStatus(SUCCESS_CODE);
+                    } else{ // id start at 1, so no valid user
+                        l.info("checkUser, user Error");
+                        response.setStatus(BAD_AUTH_CODE);
+                    }
+                    return;
                 }
-            }
-            // serve cookies :)
-            if (signup || (login && id > 0)) {
-                if(signup) {
+                
+                if (signup) {
                     String name = Utils.base64ToString(request.getParameter(Utils.toBase64Uri("name")));
                     if(id>0){
-                        l.info("doGet, signup, user already found");
+                        l.info("signup, user already found");
                         response.setStatus(USER_ALREADY_FOUND_CODE); // user already has an account!
                         return;
                     }
                     int signupId =  database.signUp(name, pass, email);                
                     if(signupId == SERVER_ERROR){
-                        l.info("doGet, signup, serverError signing up");
+                        l.info("signup, serverError signing up");
                         response.setStatus(SERVER_ERR_CODE); //Server Error, Database error
                         return;
                     }
-                    
                 }
-                response.addCookie(emailCookie);
-                response.addCookie(passCookie);
-                response.addCookie(lastLogedUserIndex);
-                response.addCookie(numOfLogedUsers);
-                byte[] uniqueIdBytes = generateUniqueId(email, pass, id);
-                response.getOutputStream().write(mergeBytes(Utils.intToBytes(uniqueIdBytes.length), uniqueIdBytes));
-                l.info("authentication done! id sent");
-            } else{
-                response.setStatus(BAD_AUTH_CODE); //client Error, bad Authentication
-            }
-            return;
-        }
-        else if (forceDownload) { // if target is browser force download
-            try {
-                if(!valid) {
-                    l.info("doGet, forceDownload, not valid url");
-                    response.setStatus(400);
+
+                if(mobile && (signup || login)) {
+                    l.info("mobile rquest, ", signup?"signup, ":"login, ", "generating uniqueId");
+                    byte[] uniqueIdBytes = generateUniqueId(email, pass);
+                    response.getOutputStream().write(mergeBytes(Utils.intToBytes(uniqueIdBytes.length), uniqueIdBytes));
                     return;
                 }
-                l.info("dogGet, start forceBrowserFileDownload");
-                forceBrowserFileDownload("https://www.youtube.com/watch?v="+urlId, response);
-                if(id == 0) database.addAnonymousDownload();
-                else database.incrementUserLocalDownloadsNum(id);
-            } catch (Exception e) { 
-                // should inform user
-               e.printStackTrace();
-               response.setStatus(SERVER_ERR_CODE); 
-               return;
+
+                {// prepare cookies
+                    l.info("doGet, perparing cookies");
+                    Cookie[] cookies = request.getCookies();
+                    if (cookies != null && cookies.length > 0) {
+                        
+                        LLUI = Integer.parseInt((String)cookiesHas(cookies, Utils.base64ToString("lastlogeduserindex"), null, false)[1]);                    
+                        NOLU = Integer.parseInt((String)cookiesHas(cookies, Utils.base64ToString("numoflogedusers"), null, false)[1]);
+
+                        if (signup) {
+                            NOLU++;
+                            LLUI = NOLU-1;
+                        }
+
+                        else if(login) {
+                            String nameKey = (String)(cookiesHas(cookies, Utils.toBase64(email), null, false)[1]);
+                            LLUI = Integer.parseInt(""+ nameKey.charAt(nameKey.length()-1));
+                        }
+                    
+                    } else {
+                        LLUI = 0;
+                        NOLU = 1;
+                    }
+
+                    lastLogedUserIndex = new Cookie(Utils.toBase64("lastlogeduserindex"), new String(LLUI+""));
+                    lastLogedUserIndex.setMaxAge(SIX_MONTH_SEC);
+                    numOfLogedUsers = new Cookie(Utils.toBase64("numoflogedusers"), new String(NOLU+""));
+                    numOfLogedUsers.setMaxAge(SIX_MONTH_SEC);
+                    if (cookies == null || !(boolean)(cookiesHas(cookies, Utils.toBase64(email), Utils.toBase64(pass), true)[0])) {
+                        emailCookie = new Cookie(Utils.toBase64("email"+LLUI), Utils.toBase64(email));
+                        emailCookie.setMaxAge(SIX_MONTH_SEC);
+
+                        passCookie = new Cookie(Utils.toBase64("password"+LLUI), Utils.toBase64(pass));
+                        passCookie.setMaxAge(SIX_MONTH_SEC);
+                    }
+                    l.info("cookies, lastlogeduserindex: ", LLUI, " numOfLogedUsers: ", NOLU, "with above email, padd, are encoded in 64Base");
+                }
+                // serve cookies :)
+                if (signup || login) {
+                    l.info("serving cookies");
+                    response.addCookie(emailCookie);
+                    response.addCookie(passCookie);
+                    response.addCookie(lastLogedUserIndex);
+                    response.addCookie(numOfLogedUsers);
+                }
             }
-        }
-        else if (mobilesDownload) { // if target is mobile send via TCP
-            l.info("doGet, mobilesDownload");
-            if (id <= 0) {
-                l.info("doGet, mobilesDownload, user not found");
-                response.setStatus(BAD_AUTH_CODE);
+            else if (forceDownload) { // if target is browser force download
+                try {
+                    if(!valid) {
+                        l.info("forceDownload, not valid url");
+                        response.setStatus(400);
+                        return;
+                    }
+                    l.info("dogGet, start forceBrowserFileDownload, songId: ", urlId);
+                    forceBrowserFileDownload("https://www.youtube.com/watch?v="+urlId, response);
+                    if(id == 0) database.addAnonymousDownload();
+                    else {
+                        database.incrementUserDownloadsNum(id);
+                    }
+                    l.info("downloads num incremented");
+                } catch (Exception e) { 
+                    // should inform user
+                   e.printStackTrace();
+                   response.setStatus(SERVER_ERR_CODE); 
+                   return;
+                }
+            }
+            else if (mobilesDownload) { // if target is mobile send via TCP
+                l.info("doGet, mobilesDownload");
+                if (id <= 0) {
+                    l.info("doGet, mobilesDownload, user not found");
+                    response.setStatus(BAD_AUTH_CODE);
+                    return;
+                }
+                l.info("doGet, mobileDownload, inserting url ", urlId, " title ", title, " id ", id);
+                database.insertSong(id, urlId, (title.length() > TITLE_SIZE)?
+                    title.substring(0, TITLE_SIZE).trim():title.trim(), message, 0);
+            }
+
+            if(id > 0 && checkNonce) { //TODO UPDATE CHECKNONE WHEN YOU DONE;
+
+                if (listOfPeersInfoById) {
+                    response.getOutputStream.write(database.getListOfpeersById(id));
+                } else if(getListOfPeersIds) {
+                    response.getOutputStream.write(database.getListOfPeersIds(id));
+                } else if(listOfUnrespondedRequests||listOfNewRequests) {
+                    response.getOutputStream.write(database.getListOfRequests(id, listOfNewRequests));
+                } else if(listOfNewSharedSongs || listOfSharedSongs) {
+                    response.getOutputStream.write(database.geSharedSongsInfo(id, listOfNewSharedSongs));
+                } else if (searchByName) {
+                    response.getOutputStream.write(database.searchByName(query, limitStart, limit));
+                } else if (searchByEmail) {
+                    response.getOutputStream.write(database.searchByEmail(query));
+                } else if(setRequestResponded) {
+                    database.setRequestState(Utils.publickKeyDecryption(peerid.getBytes()), RESPONDED);
+                } else if (setUserImage) {
+                    int size;
+                    InputStream is = response.getInputStream();
+                    byte[] imageSizeBytes = new byte[4];
+                    is.read(imageSizeBytes);
+                    int imageSize = Utils.bytesToInt(imageSizeBytes);
+                    if(imageSiz > MAX_IMAGE_SIZE) {
+                        response.setStatus(IMAGE_SIZE_EXCEEDED_ITS_LIMIT);
+                        return;
+                    }
+                    byte[] image = new byte[imageSize];
+                    is.read(image);
+                    database.addImage(id, image);
+                } else if(sendShareRequest) {
+                    database.addRelation(id, Utils.publickKeyDecryption(peerId.getBytes()));
+                } else if(removeRelation) {
+                    database.endRelation(id, Utils.publickKeyDecryption(peerId.getBytes()));
+                } else if(removeSong) {
+                    database.removeSong(songDatabaseId);
+                } else if(shareSong) {
+                    database.insertSong(id, songId, title, message, Utils.bytesToInt(Utils.publickKeyDecryption(peerId.getBytes)));
+                } 
                 return;
+            } else {
+                responde.setStatus(BAD_AUTH_CODE);
             }
-            l.info("doGet, mobileDownload, inserting givin url and id");
-            database.insertSong(id, urlId);
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
-    }
     }
 
     @Override 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
     throws IOException, ServletException{
-        l.info("dopPost!");
+        l.info("doPost!");
     }
 
     public void destroy() {
@@ -236,6 +310,7 @@ public final class Download extends HttpServlet implements Consts{
 
     private void forceBrowserFileDownload(String url, HttpServletResponse response) {
         try {
+            l.info("forceDownload url ", url);
             Object[] fileInfo = Utils.downloadSong(url);
             File f = (File) fileInfo[0];
             String fileName = (String) fileInfo[1];
@@ -252,12 +327,13 @@ public final class Download extends HttpServlet implements Consts{
         }
     }
 
-    private byte[] generateUniqueId(String email, String pass, int id, String url) {
-        String uniqueId = Utils.toBase64(new StringBuilder(email).append(ID_SPLITER).append(pass).append(ID_SPLITER)
-            .append(id).append(ID_SPLITER).append(url).toString());
-        l.info("generating user uniqueId for id = "+uniqueId);
+    private byte[] generateUniqueId(String email, String pass, id) {
+        String uniqueId = Utils.toBase64(new StringBuilder(email).append(ID_SPLITER).append(pass)
+            .append(ID_SPLITER).append(database.incrementNonce(id)).toString());
+        l.info("generating user uniqueId for id ",uniqueId);
         return uniqueId.getBytes();
-    }
+    }    
+    
 
     private boolean validateUrlId(String urlId) { 
         //TODO validate
