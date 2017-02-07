@@ -6,7 +6,7 @@
  
    <servlet>
       <servlet-name>Download</servlet-name>
-      <servlet-class>Download</servlet-class>
+      <servlet-class>err.Download</servlet-class>
    </servlet>
  
    <servlet-mapping>

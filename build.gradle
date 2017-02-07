@@ -16,6 +16,7 @@ dependencies {
 
 task listen(type: JavaExec) {
 	classpath = sourceSets.main.runtimeClasspath
-	main = 'Listener'
+	main = 'err.Listener'
+	maxHeapSize = '1G'
 }
 

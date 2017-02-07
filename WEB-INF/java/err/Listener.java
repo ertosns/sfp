@@ -1,8 +1,15 @@
+package err;
+
 import java.io.*;
 import java.util.*;
 import java.net.*;
 import java.util.logging.*;
 
+//TODO in tcp|http connection does ack message sent at the end of application protocol is important? it isn't tcp ensure that every packet is sent, and received. optimize to work without that extra|redundant (ACK) way.
+//TODO two kinds of songs should be sent {shareSongs(those are deleted if downloaed}, shownload song)},
+// if user accepted song {either add new column of named accepted and only fetch accepted songs, or only search songs with sender_id = 0 and if user 
+// accpeted song remove old item with it's row id, and create new row with sender_id = 0} balanced in time and memory first one is more intuitive.
+// limit ip #requests per minute
 
 public class Listener implements Runnable, Consts{
 
@@ -38,52 +45,69 @@ public class Listener implements Runnable, Consts{
                 byte[] uniqueIdBytes = new byte[uniqueIdBytesSize];
                 is.read(uniqueIdBytes);
                 String encodedId = new String(uniqueIdBytes);
-                l.info("encodedId in form of email/pass ", encodedId);                
-                String[] idSegments = Utils.base64ToString(encodedId).split(ID_SPLITER); // {email, pass}
-
+                l.info("encodedId in form  EMAIL/PASS/NONCE ", encodedId);                
+                String[] idSegments = Utils.base64ToString(encodedId).split(ID_SPLITER); // {email, pass, nonce}
+                   
                 l.info("writing interval ", W8_INTERVAL);
                 write(intToBytes(W8_INTERVAL)); 
                 String[] songsInfo; // even number of pair {songId, title}
                 int userId = 0;
 
-                if( (userId = database.getAuthID(idSegments[1], idSegments[0]), idSegments[2]) > 0 &&
-                    (songsInfo = database.getSongsInfo(userId)).length > 0) {
+                if ((userId = database.getAuthID(idSegments[1], idSegments[0], Integer.parseInt(idSegments[2]))) > 0) {
 
-                    int totalDownloads = database.getTotalDownloads(userId); //no need to update browserDownload every few mins|secs
-                    l.info("write totalDownloads ", totalDownloads, " listOfDownloadsSize ", songsInfo.length);
-                    write(Utils.intToBytes(totalDownloads)); 
-                    write(Utils.intToBytes(songsInfo.length));
+                    boolean has = database.hasUnackRequests(userId);
+                    write(Utils.intToBytes(has?TRUE:FALSE));
+                    l.info("hasUnackRequests ", has);
 
-                    StringBuilder sb = new StringBuilder();
-                    for(int i = 0; i < songsInfo.length; i++)
-                        sb.append(songsInfo[i]);
-                    byte[] songsInfoBytes = sb.toString().getBytes();
-                    int songBytesLen = songsInfoBytes.length;
-                    String firstSongId = songsInfo[0].split("/")[0];
-                    l.info("write songInfoBytes");
-                    write(Utils.intToBytes(songBytesLen));
-                    write(songsInfoBytes);
+                    has = database.hasNewSongs(userId);
+                    write(Utils.intToBytes(has?TRUE:FALSE));
+                    l.info("hasNewSongs ", has);
+                    
+                    has = database.hasNewPeerRequests(userId);
+                    write(Utils.intToBytes(has?TRUE:FALSE));
+                    l.info("hasPeersRequests ", has);
+                                       
+                    if ((songsInfo = database.getLocalSongsInfo(userId)).length > 0) {
+                        int totalDownloads = database.getTotalDownloads(userId); //no need to update browserDownload every few mins|secs
+                        l.info("write totalDownloads ", totalDownloads, " listOfDownloadsSize ", songsInfo.length);
+                        write(Utils.intToBytes(songsInfo.length));
+                        write(Utils.intToBytes(totalDownloads)); 
+                        
 
-                    l.info("client found, downloading song of id: ", firstSongId);
-                	sendSong(firstSongId);
-                    os.write(bytes);
-                    l.info("song is sent");
+                    
+                        StringBuilder sb = new StringBuilder();
+                        for(int i = 0; i < songsInfo.length; i++)
+                            sb.append(songsInfo[i]);
+                        byte[] songsInfoBytes = sb.toString().getBytes();
+                        int songBytesLen = songsInfoBytes.length;
+                        String[] firstSongInfo = songsInfo[0].split("/"); // {url, title, id}
+                        String firstSongUrl = firstSongInfo[0];
+                        int firstSongDatabaseId = Integer.parseInt(firstSongInfo[2].replace("\n", ""));
+                        l.info("write songInfoBytes");
+                        write(Utils.intToBytes(songBytesLen));
+                        write(songsInfoBytes);
 
-                    boolean success = (is.read() == 1)? true:false;
-                    if(success) {
-                        l.info("song received successfully, cleaning up, downloads incremented");
-                        clean(userId, firstSongId); //TODO or add timestame to song for cashe.
-                        database.incrementUserDownloadsNum(userId);
+                        l.info("client found, downloading song of id: ", firstSongUrl);
+                	    sendSong(firstSongUrl);
+                        os.write(bytes);
+                        l.info("song is sent");
+
+                        boolean success = (is.read() == 1)? true:false;
+                        if (success) {
+                            l.info("song received successfully, cleaning up, downloads incremented");
+                            clean(userId, firstSongDatabaseId); //TODO or add timestame to song for cashe.
+                        }
+
+                    } else {
+                        write(Utils.intToBytes(0));
+                        os.write(bytes);
                     }
-                }
-                else {
+                } else {
                     l.info("nothing is found, writing -1(unkonwn total downloads) 0(num of songs to download)");
                     write(Utils.intToBytes(-1)); //TOTAL DOWNLOADS UNKNOWN
                     write(Utils.intToBytes(0));  //NUM OF SONGS TO DOWNLOAD
                     os.write(bytes);
                 }
-
-
 
     		} catch(Exception e) {
     			e.printStackTrace();
@@ -92,16 +116,16 @@ public class Listener implements Runnable, Consts{
             }
     }
 
-    public void clean (int id, String url) {
+    public void clean (int id, int databaseID) {
         // clean song in songs file |TODO stick timestamp for cashe
-        // remove song from database.
-        l.info("clean user id "+id+", songId "+url);
+        l.info("remove songs for file, database id "+id+", databaseId "+databaseID);
         try {
             if(songFile != null) {
                 boolean success =songFile.delete();
                 l.info("song file deteted with success ", success);
             }
-            database.removeSong(id, url);
+            database.removeSong(databaseID); // by datbase id
+            database.incrementUserDownloadsNum(id);
         } catch (Exception e) {
             e.printStackTrace();
         }

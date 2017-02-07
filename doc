@@ -1,16 +1,69 @@
 TESTING_SHORT_VIDEO: https://www.youtube.com/watch?v=bTTi43A6QYM
 
+MUST_CHANGE: 
+   - public key range n must always be >> max user ID
+   - use http all users info is is vulnerable to attacker
+
 AUTH:
     NUM: [0-9]+
     WORD: [\\w]{4, 20} //bytes no chars
     PASS: [\\w]{8, 20} //bytes no chars
     EMAIL: //use api-regex //max 100 bytes no chars
-    SIGNUP: signup=true&base64Uri(name)=base64(WORD)&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)&mobile=bool
-    LOGIN: login=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)&mobile=bool
-    CHECKUSER: checkuser=true&base64Uri(pass)=base64(PASS)&base64Uri(email)=base64(EMAIL)&mobile=bool
+    SIGNUP: signup=true&base64Uri(name)=base64Uri(WORD)&base64Uri(pass)=base64Uri(PASS)&base64Uri(email)=base64Uri(EMAIL)&mobile=bool
+    LOGIN: login=true&base64Uri(pass)=base64Uri(PASS)&base64Uri(email)=base64Uri(EMAIL)&mobile=bool
+    CHECKUSER: checkuser=true&base64Uri(pass)=base64Uri(PASS)&base64Uri(email)=base64Uri(EMAIL)&mobile=bool
     after signup, login server resonse with uniqueId containing authentication, nonce.
 SERVICES:
+    PEERS_INFO := NAME_SIZE|NAME|EMAIL_SIZE|EMAIL|PIC_SIZE|PIC|RSA(ID)_SIZE|RAS(ID)  (array)
+    (if info rquests by usersIds last two segments arn't sent, requested only by user id)
+
+    IS_IDS: (LIST OF bigInts Ids are givin in inputStream) size id1 id2 id3 .. idn
+    
     DOWNLOADTOMOBILES: base64Uri(email)=EMAIL&base64Uri(pass)=PASS&url=songId&mobilesdownload=true&title=TITLE
+    
+
+    GET_LIST_OF_NEW_REQUEST: listofnewrequests=true&id=USER_UNIQUE_ID 
+    {name, email, RAS(sender_id), picture}
+
+    GET_LIST_OF_ACCEPTED_REQUESTS: //responded with 1 if ack is OutputStream
+    getacceptedrequests=true&id=USER_UNIQUE_ID
+    {name, email, RAS(sender_id), picture}
+
+    GET_LIST_OF_NON_NEW_REQUEST: listofnonnewrequests=ture&id=USER_UNIQUE_ID
+    {name, email, RAS(sender_id), picture}
+
+    
+  
+    SEND_PEER_REQUEST: 
+    sendsharerequest=true&idi=USER_UNIQUE_ID&peerid=senderId
+
+
+    GET_LIST_OF_NEW_SONGS:
+    listofnewsharedsongs=true&id=USER_UNIQUE_ID
+
+    GET_LIST_OF_UNRESPONDED_SONGS: listofsharedsongs=true&id=USER_UNIQUE_ID
+    songNum {databaseId, songUrlId, songTitle, requestDate_as_long_in_GMT, message, senderName, rsa(sender_Id)}
+
+    
+
+
+    REMOVE_SONG: removesong=ture&Id=USER_ID&songdatabaseid=NUMBER
+
+    SET_REQUEST_RESPONDED: setrequestresponded=true&id=USER_UNIQUE_ID&peerId=bigInt
+    SET_IMAGE: setuserimage=true&id=USER_UNIQUE_ID
+    //image sent in IS as follow size imageBytes
+
+    SHARE_SONG: sharesong=ture&id=USER_UNIQUE_ID&peerid=peerBigInt
+    REMOVE_RELATION: removerelation=true&id=USER_UNIQUE_ID&peerid=peerBigInt
+    ACCEPT_RELATION:
+    acceptrelation=true&id=USER_UNIQUE_ID&peerid=peerBigInt
+    SHARE_REQUEST: sharerequest=true&songId=songUrl&title=title&peerid=peerBigInt
+    
+    SEARCH_BY_EMAIL: searchbyemail=true&id=USER_UNIQUE_ID&query=EMAIL
+    {size, name, size, image, size, rsa(senderid)}
+    SEARCH_BY_NAME: searchbyname=true&id=USER_UNIQUE_ID&query=name&limitstart=INT&limit=INT
+    numberReturned {size, name, size, image, size, rsa(sender_id)}
+
 COOKIES:
    base64(email), base64(EMAIL)
    base64(password), base64(PASS)
@@ -23,19 +76,51 @@ RESPONSE_CODE:
     int CONNECTIVITY_ERR_CODE = 403;
     int SERVER_ERR_CODE = 500;
     int SUCCESS_CODE = 200;
+    int IMAGE_SIZE_EXCEEDED_ITS_LIMIT = 405;
 
 LISTENER_SOCKET_PROTOCOL
-    NONCE:     INTEGER //incremented every login.
+    NONCE: INTEGER //incremented every login.
     UNIQUE_ID: EMAIL,PASS,NONCE
-   (1) CLIENT->  UNIQUI_ID_SIZE|UNIQUE_ID|
+    MESSAGE: STRING OF MAX 140 CHARS
+    {0, 1} := 0=false, 1=true    
 
-   (2) SERVER->  W8_INTERVAL_INT|
-                 NUMBER_OF_TOTAL_DOWNLOADS|
-                 NUMBER_OF_DOWNLOADS_AVAILABLE(N)|
-                 NAME_AND_URL_AND_SEPERATOR_SIZE_OF_ALL_AVAIL_SONGS|[SONG_NAME|/|SONGURL|\n]X{N}|
-                 SONG_SIZE|SONG
+    W8_INTERVAL_INT: INTEGER
+
+    HAS_UNACK_REQUESTS := {0, 1}
+    HAS_SHARED_SONGS := {0, 1}
+    HAS_PEER_REQUESTS := {0, 1} 
+
+    NUMBER_OF_DOWNLOADS_AVAILABLE_OF_LOCAL_SONGS := DOWNLOADS BY CLIENT HIMSELF
+
+    LOCAL_SONGS_INFO_SIZE := REQURIED BY CLIENT HIMESELF
+    LOCAL_SONGS_INFO := values seperated by / because first result will be used to download first song
+      URL/ (used donwload song picture from youtube)
+      SONG_TITLE/ (used in notification)
+      ID (used to distinguishe each song)
+    
+
+
+   (1) CLIENT->  base64(UNIQUI_ID_SIZE|UNIQUE_ID|)
+
+   (2) SERVER->  W8_INTERVAL_INT
+                 
+                 HAS_UNACK_REQUESTS
+                 HAS_NEW_SONGS
+                 HAS_PEER_REQUESTS
+                 
+                 NUMBER_OF_TOTAL_DOWNLOADS
+                 NUMBER_OF_DOWNLOADS_AVAILABLE_OF_LOCAL_SONGS
+                 
+                 LOCAL_SONGS_INFO_SIZE
+                 LOCAL_SONGS_INFO
+                 
+                 SONG_TITLE_SIZE
+                 SONG_TITLE
+                 SONG_SIZE
+                 SONG
 
    (3) CLIENT->  ACK_FLAG(1=ACK|0=FAILED)
+
 
 COLORS:
     bright(orange)
@@ -43,16 +128,6 @@ COLORS:
       shade2(darker): -> 0xbf621a 
     dark(grey) --------> 0x343434
 
-DATABASE:
-    SONGS:  ID(AUTO_INCREMENT)||USER_ID(INT, id from USER_INFO table)||URL(VARCHAR, video id)||DATE(
-
-    DATE, date of download request)||SENDER_ID(INT)
-    
-    USER_INFO: ID(AUTO_INCREMENT)|NAME(VARCHAR)||PASS(VARCHAR)||EMAIL(VARCHAR)||IMAGE(BLOB)||DOWNLOADS(INT)||LIST_OF_PERRS(VARCHAR(UNLIMITED), list of peers id, seperated by white space )||LEXICOGRAPHICAL_ORDER(INT)
-    
-    SHARE_SONGS_REQUEST: SENDER_ID(INT)||RECEIVER_ID(INT)||RECEIVED(BIT(1))
-    
-    ANONYMOUS_DOWNLOADS: ID(AUTO_INCREMENT)||DOWNLOAD_DATE(DATE)
 
 TODO_FEATURES
     //TODO consider supporting multiple devices.
@@ -60,4 +135,5 @@ TODO_FEATURES
     //TODO (res) send bytes while reading vs sending buffer(FOR FASTER DOWNLOAD)
     //TODO add preferences of {language, search_number, ..}
     //TODO make download locally for faster download
-    //
+    //TODO populate each listview item while downloading appearntly listview, gridview doesn't support that do more search in subject
+    //TODO attach each listview|view backed with cloud with handler class so each view loads synchroniously
