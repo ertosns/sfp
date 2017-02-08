@@ -169,23 +169,30 @@ public class Database implements Consts {
         return SERVER_ERROR; //fail flag for testcase
     }
 
-    public int getNonce(int id) {
-        try {
+    public int getNonce(int id) 
+    {
+        try 
+        {
             ResultSet rs = stm.executeQuery("SELECT NONCE FROM USER_INFO WHERE ID = "+id+";");
             if(rs.next()) return rs.getInt(1);
-        } catch(Exception e) {
+        } 
+        catch(Exception e) 
+        {
             e.printStackTrace();
-            try {
-                if(stm == null || stm.isClosed()) {
+            try 
+            {
+                if(stm == null || stm.isClosed()) 
+                {
                     con = DriverManager.getConnection(SFP_DATABASE_URL, NAME, PASS);
                     stm = con.createStatement();
                 }
-            } catch (Exception sql) {
+            } 
+            catch (Exception sql) 
+            {
                 sql.printStackTrace();
             }
-            return SERVER_ERROR;
         }
-        return USER_NOT_FOUND;
+        return 0;
     }
 
     public byte[] getImage(int id) {
@@ -274,7 +281,7 @@ public class Database implements Consts {
 
     public byte[] searchByName (int id, String query, int start, int len) 
     {
-        String httpQuery = "SELECT NAME, IMAGE, ID FROM USER_INFO WHERE NAME >= '"+query+"' ORDER BY NAME ASC LIMIT "+start+", "+len+" AND ID != "+id+";";
+        String httpQuery = "SELECT NAME, IMAGE, ID FROM USER_INFO WHERE NAME >= '"+query+"' AND ID != "+id+" ORDER BY NAME ASC LIMIT "+start+", "+len+";";
         return getPeersInfo(id, httpQuery, new int[]{FALSE, TRUE, FALSE, FALSE}, true);
     }
 

@@ -11,21 +11,24 @@ import java.util.logging.Handler;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
-public final class Download extends HttpServlet implements Consts{
+public final class Download extends HttpServlet implements Consts
+{
     
     
     private boolean browser = true;
     private Database database = null;
     Log l = null;
 
-    public Download() {
+    public Download() 
+    {
         database = new Database();
         l = new Log(this.toString(), Log.CONSOLE);
     }
 
     // inspect cookies (names and values) for one or two cookies or both for (i.e name, pass)
     // if found name return it's value and ture else return false
-    public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair) {
+    public Object[] cookiesHas(Cookie[] cookies, String name, String pass, boolean pair) 
+    {
 
         l.info("inspeck cookies for name ", name, " pass, ", pass);
         boolean cName = false;
@@ -33,13 +36,17 @@ public final class Download extends HttpServlet implements Consts{
         int authIndex = 0;
         Cookie tmpCookie = null;
         Object[] obj = new Object[2];
-        for (int i = 0; i < cookies.length; i++) {
-            if ((tmpCookie = cookies[i]).getValue().equals(name) || tmpCookie.getName().equals(name)) {
-                if (cName) {
+        for (int i = 0; i < cookies.length; i++) 
+        {
+            if ((tmpCookie = cookies[i]).getValue().equals(name) || tmpCookie.getName().equals(name)) 
+            {
+                if (cName) 
+                {
                     obj[0] = new Boolean(true);
                     return obj;
                 }
-                if (pair) {
+                if (pair) 
+                {
                     cName = true;
                     name = pass;
                     continue;
@@ -56,8 +63,10 @@ public final class Download extends HttpServlet implements Consts{
     // login, signup, check or valid user, download locally, download to phones
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) 
-        throws IOException, ServletException {
-        try {
+        throws IOException, ServletException 
+        {
+        try 
+        {
             boolean signup = Boolean.parseBoolean(request.getParameter("signup"));
             boolean login = Boolean.parseBoolean(request.getParameter("login"));   
 
@@ -128,8 +137,8 @@ public final class Download extends HttpServlet implements Consts{
                         response.setStatus(USER_ALREADY_FOUND_CODE); // user already has an account!
                         return;
                     }
-                    int signupId =  database.signUp(name, pass, email);                
-                    if (signupId == SERVER_ERROR)
+                    id =  database.signUp(name, pass, email);                
+                    if (id == SERVER_ERROR)
                     {
                         l.info("signup, serverError signing up");
                         response.setStatus(SERVER_ERR_CODE); //Server Error, Database error
@@ -139,7 +148,7 @@ public final class Download extends HttpServlet implements Consts{
 
                 if (mobile && (signup || login)) 
                 {
-                    if(nonce > -1) 
+                    if(nonce >= 0 && id > 0) 
                     {
                         byte[] uniqueIdBytes = generateUniqueId(email, pass, id);
                         response.getOutputStream().write(mergeBytes(Utils.intToBytes(uniqueIdBytes.length), uniqueIdBytes));
@@ -507,12 +516,14 @@ public final class Download extends HttpServlet implements Consts{
     }    
     
 
-    private boolean validateUrlId(String urlId) { 
+    private boolean validateUrlId(String urlId) 
+    {
         //TODO validate
         return true;
     }
 
-    private byte[] mergeBytes(byte[] byte1, byte[] byte2) {
+    private byte[] mergeBytes(byte[] byte1, byte[] byte2) 
+    {
         int len1 = byte1.length;
         int len2 = byte2.length;
         byte[] newBytes = new byte[len1+len2];
